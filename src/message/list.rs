@@ -1,4 +1,4 @@
-use crate::{FloreumError, Order, Response, names::Names, read_order, read_u64};
+use crate::{FloreumError, Order, names::Names, read_order, read_u64};
 #[derive(Clone, PartialEq, Eq)]
 pub struct RequestList {
     pub descriptor: u64,

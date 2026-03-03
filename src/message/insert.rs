@@ -1,4 +1,4 @@
-use crate::{FloreumError, Order, Request, Response, read_content, read_order, read_u64};
+use crate::{FloreumError, Order, read_content, read_order, read_u64};
 #[derive(Clone, PartialEq, Eq)]
 pub struct RequestInsert<C: AsRef<[u8]>> {
     pub descriptor: u64,

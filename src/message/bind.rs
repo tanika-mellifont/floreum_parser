@@ -1,5 +1,5 @@
 use crate::{
-    FloreumError, Order, Request, Response, State, read_order, read_state, read_str, read_u64,
+    FloreumError, Order, State, read_order, read_state, read_str, read_u64,
 };
 #[derive(Clone, PartialEq, Eq)]
 pub struct RequestBind<N: AsRef<str>> {

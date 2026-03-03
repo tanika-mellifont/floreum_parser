@@ -1,4 +1,4 @@
-use crate::{FloreumError, Head, Request, Response, read_head, read_u64};
+use crate::{FloreumError, Head, read_head, read_u64};
 #[derive(Clone, PartialEq, Eq)]
 pub struct RequestSeek {
     pub descriptor: u64,

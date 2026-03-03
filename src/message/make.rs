@@ -1,4 +1,4 @@
-use crate::{FloreumError, Request, Response, State, read_state, read_str, read_u64};
+use crate::{FloreumError, State, read_state, read_str, read_u64};
 #[derive(Clone, PartialEq, Eq)]
 pub struct RequestMake<N: AsRef<str>> {
     pub descriptor: u64,

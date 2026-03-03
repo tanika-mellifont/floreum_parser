@@ -1,4 +1,3 @@
-use crate::Response;
 #[derive(Clone, PartialEq, Eq)]
 pub struct ResponseError {}
 impl ResponseError {
