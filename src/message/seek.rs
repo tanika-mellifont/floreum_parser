@@ -6,7 +6,7 @@ pub struct RequestSeek {
     pub offset: u64,
 }
 impl RequestSeek {
-    pub const KIND_TAG: u64 = 50;
+    pub const KIND_TAG: u64 = 140;
     pub fn new(descriptor: u64, head: Head, offset: u64) -> Self {
         Self {
             descriptor,
@@ -31,7 +31,7 @@ impl RequestSeek {
 #[derive(Clone, PartialEq, Eq)]
 pub struct ResponseSeek {}
 impl ResponseSeek {
-    pub const KIND_TAG: u64 = 51;
+    pub const KIND_TAG: u64 = 141;
     pub fn new() -> Self {
         Self {}
     }

@@ -6,7 +6,7 @@ pub struct RequestList {
     pub count: u64,
 }
 impl RequestList {
-    pub const KIND_TAG: u64 = 30;
+    pub const KIND_TAG: u64 = 40;
     pub fn new(descriptor: u64, cursor: Order, count: u64) -> Self {
         Self {
             descriptor,

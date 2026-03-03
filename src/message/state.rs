@@ -4,7 +4,7 @@ pub struct RequestState {
     pub descriptor: u64,
 }
 impl RequestState {
-    pub const KIND_TAG: u64 = 50;
+    pub const KIND_TAG: u64 = 20;
     pub fn new(descriptor: u64) -> Self {
         Self { descriptor }
     }
@@ -21,7 +21,7 @@ pub struct ResponseState {
     state: State,
 }
 impl ResponseState {
-    pub const KIND_TAG: u64 = 51;
+    pub const KIND_TAG: u64 = 21;
     pub fn new(state: State) -> Self {
         Self { state }
     }

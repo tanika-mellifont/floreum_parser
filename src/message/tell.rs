@@ -6,7 +6,7 @@ pub struct RequestTell {
     pub offset: u64,
 }
 impl RequestTell {
-    pub const KIND_TAG: u64 = 50;
+    pub const KIND_TAG: u64 = 150;
     pub fn new(descriptor: u64, head: Head, offset: u64) -> Self {
         Self {
             descriptor,
@@ -33,7 +33,7 @@ pub struct ResponseTell {
     offset: u64,
 }
 impl ResponseTell {
-    pub const KIND_TAG: u64 = 51;
+    pub const KIND_TAG: u64 = 151;
     pub fn new(offset: u64) -> Self {
         Self { offset }
     }

@@ -1,14 +1,11 @@
-use crate::{
-    Direction, FloreumError, read_direction,
-    read_u64,
-};
+use crate::{Direction, FloreumError, read_direction, read_u64};
 #[derive(Clone, PartialEq, Eq)]
 pub struct RequestTruncate {
     pub descriptor: u64,
     pub direction: Direction,
 }
 impl RequestTruncate {
-    pub const KIND_TAG: u64 = 120;
+    pub const KIND_TAG: u64 = 130;
     pub fn new(descriptor: u64, direction: Direction) -> Self {
         Self {
             descriptor,
@@ -34,7 +31,7 @@ pub struct ResponseTruncate {
     pub count: u64,
 }
 impl ResponseTruncate {
-    pub const KIND_TAG: u64 = 121;
+    pub const KIND_TAG: u64 = 131;
     pub fn new(count: u64) -> Self {
         Self { count }
     }

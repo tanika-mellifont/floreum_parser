@@ -1,7 +1,4 @@
-use crate::{
-    Direction, FloreumError, Order, read_content, read_direction, read_order,
-    read_u64,
-};
+use crate::{Direction, FloreumError, Order, read_content, read_direction, read_order, read_u64};
 #[derive(Clone, PartialEq, Eq)]
 pub struct RequestOverwrite<C: AsRef<[u8]>> {
     pub descriptor: u64,

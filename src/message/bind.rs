@@ -1,6 +1,4 @@
-use crate::{
-    FloreumError, Order, State, read_order, read_state, read_str, read_u64,
-};
+use crate::{FloreumError, Order, State, read_order, read_state, read_str, read_u64};
 #[derive(Clone, PartialEq, Eq)]
 pub struct RequestBind<N: AsRef<str>> {
     pub descriptor: u64,
@@ -10,7 +8,7 @@ pub struct RequestBind<N: AsRef<str>> {
     pub name: N,
 }
 impl<N: AsRef<str>> RequestBind<N> {
-    pub const KIND_TAG: u64 = 150;
+    pub const KIND_TAG: u64 = 160;
     pub fn new(descriptor: u64, new: u64, order: Order, state: State, name: N) -> Self {
         Self {
             descriptor,
@@ -51,7 +49,7 @@ impl<'a, N: AsRef<str> + From<&'a str>> RequestBind<N> {
 #[derive(Clone, PartialEq, Eq)]
 pub struct ResponseBind {}
 impl ResponseBind {
-    pub const KIND_TAG: u64 = 151;
+    pub const KIND_TAG: u64 = 161;
     pub fn new() -> Self {
         Self {}
     }

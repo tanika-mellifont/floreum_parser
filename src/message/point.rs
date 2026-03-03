@@ -6,7 +6,7 @@ pub struct RequestPoint {
     pub offset: u64,
 }
 impl RequestPoint {
-    pub const KIND_TAG: u64 = 50;
+    pub const KIND_TAG: u64 = 60;
     pub fn new(descriptor: u64, head: Head, offset: u64) -> Self {
         Self {
             descriptor,
@@ -31,7 +31,7 @@ impl RequestPoint {
 #[derive(Clone, PartialEq, Eq)]
 pub struct ResponsePoint {}
 impl ResponsePoint {
-    pub const KIND_TAG: u64 = 51;
+    pub const KIND_TAG: u64 = 61;
     pub fn new() -> Self {
         Self {}
     }
