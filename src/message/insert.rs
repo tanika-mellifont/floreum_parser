@@ -1,18 +1,18 @@
-use crate::{NextU64, Order, Response};
-#[cfg(feature = "alloc")]
-use alloc::vec::Vec;
+use crate::{FloreumError, Order, Request, Response, read_content, read_order, read_u64};
 #[derive(Clone, PartialEq, Eq)]
 pub struct RequestInsert<C: AsRef<[u8]>> {
     pub descriptor: u64,
-    pub cursor: Order,
+    pub order: Order,
+    pub length: u64,
     pub content: C,
 }
 impl<C: AsRef<[u8]>> RequestInsert<C> {
     pub const KIND_TAG: u64 = 110;
-    pub fn new(descriptor: u64, cursor: Order, content: C) -> Self {
+    pub fn new(descriptor: u64, order: Order, length: u64, content: C) -> Self {
         Self {
             descriptor,
-            cursor,
+            order,
+            length,
             content,
         }
     }
@@ -20,23 +20,23 @@ impl<C: AsRef<[u8]>> RequestInsert<C> {
         self.descriptor
             .to_le_bytes()
             .into_iter()
-            .chain(self.cursor.to_iter())
+            .chain(self.order.to_iter().into_iter())
             .chain(
-                (self.content.as_ref().len() as u64)
+                (self.length as u64)
                     .to_le_bytes()
                     .into_iter()
-                    .chain(self.content.as_ref().iter().copied()),
+                    .chain(self.content.as_ref().iter().cloned()),
             )
     }
 }
-#[cfg(feature = "alloc")]
-impl RequestInsert<Vec<u8>> {
-    pub fn vec_from_iter(iter: &mut impl Iterator<Item = u8>) -> Option<Self> {
-        let descriptor = iter.next_u64()?;
-        let cursor = Order::from_iter(iter)?;
-        let content_count = iter.next_u64()?.try_into().ok()?;
-        let content = iter.take(content_count).collect();
-        Some(Self::new(descriptor, cursor, content))
+impl<C: AsRef<[u8]> + for<'a> From<&'a [u8]>> RequestInsert<C> {
+    pub fn from_bytes(bytes: &mut &[u8]) -> Result<Self, FloreumError> {
+        Ok(Self::new(
+            read_u64(bytes)?,
+            read_order(bytes)?,
+            read_u64(bytes)?,
+            read_content(bytes)?.into(),
+        ))
     }
 }
 #[derive(Clone, PartialEq, Eq)]
@@ -51,23 +51,32 @@ impl ResponseInsert {
     pub fn to_iter(&self) -> impl Iterator<Item = u8> {
         self.count.to_le_bytes().into_iter()
     }
-    pub fn from_iter(iter: &mut impl Iterator<Item = u8>) -> Option<Self> {
-        let count = iter.next_u64()?;
-        Some(Self { count })
-    }
-    pub fn into_response<N: AsRef<str>, P: AsRef<[N]>, C: AsRef<[u8]>>(self) -> Response<N, P, C> {
-        Response::Insert(self)
+    pub fn from_bytes(bytes: &mut &[u8]) -> Result<Self, FloreumError> {
+        Ok(Self::new(read_u64(bytes)?))
     }
 }
 #[test]
 fn test_request_insert() {
-    let before = RequestInsert::new(12345, Order::After, "test test".as_bytes().to_vec());
-    let after = RequestInsert::vec_from_iter(&mut before.to_iter()).unwrap();
+    extern crate alloc;
+    use alloc::{vec, vec::Vec};
+    let before: RequestInsert<Vec<u8>> =
+        RequestInsert::new(12345, Order::After, 5, vec![1, 2, 3, 4, 5]);
+    let mut buffer = [0; 1024];
+    for (to, from) in buffer.iter_mut().zip(before.to_iter()) {
+        *to = from;
+    }
+    let mut cursor = &buffer as &[u8];
+    let after = RequestInsert::from_bytes(&mut cursor).unwrap();
     assert!(before == after);
 }
 #[test]
 fn test_response_insert() {
     let before = ResponseInsert::new(12345);
-    let after = ResponseInsert::from_iter(&mut before.to_iter()).unwrap();
+    let mut buffer = [0; 1024];
+    for (to, from) in buffer.iter_mut().zip(before.to_iter()) {
+        *to = from;
+    }
+    let mut cursor = &buffer as &[u8];
+    let after = ResponseInsert::from_bytes(&mut cursor).unwrap();
     assert!(before == after);
 }

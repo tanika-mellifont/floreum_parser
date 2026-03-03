@@ -1,0 +1,36 @@
+request.rs and response.rs, both all impl From
+add truncate request
+reorder mods
+DONE /\/\/\
+TODO \/\/\/
+check kind tags
+make errors not ()
+request and response structs, with From impls
+from_iter where possible
+make everything use Self
+check everything uses the right types
+conditionally implement clone
+check everything derives as much as possible
+check what should and shouldn't be in the main impl
+remove all phantoms
+check formatting
+remove wheres
+cargo fmt
+doc compile
+remove unused imports
+examples
+check for each type:
+- new
+- to_iter
+- from_bytes
+- request from _request
+- response from _response
+rust-analyzer checklist
+
+versioning:
+A.B.C
+A uniquely identifies a minimal contract, it does not alias with any other contract, and does not guarantee that it can be upgraded to any other version
+B identifies a non-breaking expansion of the contract, such that X.Y.Z can always be upgraded to X.(Y + 1).Z
+C identifies the release number of the contract, which may or may not increment alongside contract changes. X.Y.Z must:
+- be released before X.Y.(Z + 1)
+- be compatible with X.N.Z for any N > Y

@@ -1,9 +1,4 @@
-use crate::{NextU64, Order, Response};
-#[cfg(all(feature = "alloc", test))]
-use alloc::string::ToString;
-#[cfg(feature = "alloc")]
-use alloc::{string::String, vec::Vec};
-use core::marker::PhantomData;
+use crate::{FloreumError, Order, Response, names::Names, read_order, read_u64};
 #[derive(Clone, PartialEq, Eq)]
 pub struct RequestList {
     pub descriptor: u64,
@@ -26,72 +21,71 @@ impl RequestList {
             .chain(self.cursor.to_iter())
             .chain(self.count.to_le_bytes().into_iter())
     }
-    pub fn from_iter(iter: &mut impl Iterator<Item = u8>) -> Option<Self> {
-        let descriptor = iter.next_u64()?;
-        let cursor = Order::from_iter(iter)?;
-        let count = iter.next_u64()?;
-        Some(Self::new(descriptor, cursor, count))
+    pub fn from_bytes(mut bytes: &[u8]) -> Result<Self, FloreumError> {
+        let descriptor = read_u64(&mut bytes)?;
+        let cursor = read_order(&mut bytes)?;
+        let count = read_u64(&mut bytes)?;
+        Ok(Self::new(descriptor, cursor, count))
     }
 }
 #[derive(Clone, PartialEq, Eq)]
-pub struct ResponseList<N: AsRef<str>, P: AsRef<[N]>> {
-    pub names: P,
-    _phantom_n: PhantomData<N>,
+pub struct ResponseList<C: AsRef<[u8]>> {
+    pub names: Names<C>,
 }
-impl<N: AsRef<str>, P: AsRef<[N]>> ResponseList<N, P> {
+impl<C: AsRef<[u8]>> ResponseList<C> {
     pub const KIND_TAG: u64 = 41;
-    pub fn new(names: P) -> Self {
-        Self {
-            names,
-            _phantom_n: PhantomData,
-        }
+    pub fn new(names: Names<C>) -> Self {
+        Self { names }
     }
     pub fn to_iter(&self) -> impl Iterator<Item = u8> {
-        let count = self.names.as_ref().len() as u64;
-        count.to_le_bytes().into_iter().chain(
-            self.names
-                .as_ref()
-                .iter()
-                .map(|name| {
-                    (name.as_ref().len() as u64)
-                        .to_le_bytes()
-                        .into_iter()
-                        .chain(name.as_ref().as_bytes().into_iter().copied())
-                })
-                .flatten(),
-        )
-    }
-    pub fn into_response<C: AsRef<[u8]>>(self) -> Response<N, P, C> {
-        Response::List(self)
+        self.names.bytes().copied()
     }
 }
-#[cfg(feature = "alloc")]
-impl ResponseList<String, Vec<String>> {
-    pub fn string_vec_from_iter(iter: &mut impl Iterator<Item = u8>) -> Option<Self> {
-        let mut names = Vec::with_capacity(iter.next_u64()?.try_into().ok()?);
-        for _ in 0..names.capacity() {
-            let current_count = iter.next_u64()?.try_into().ok()?;
-            names.push(String::from_utf8(iter.take(current_count).collect()).ok()?);
-        }
-        Some(Self::new(names))
+impl<C: AsRef<[u8]> + for<'a> From<&'a [u8]>> ResponseList<C> {
+    pub fn from_bytes(bytes: &mut &[u8]) -> Result<Self, FloreumError> {
+        let names = Names::from_bytes(bytes)?;
+        Ok(Self::new(names))
     }
 }
 #[test]
 fn test_request_list() {
     let before = RequestList::new(12345, Order::Before, 67890);
-    let after = RequestList::from_iter(&mut before.to_iter()).unwrap();
+    let mut buffer = [0; 1024];
+    for (to, from) in buffer.iter_mut().zip(before.to_iter()) {
+        *to = from;
+    }
+    let after = RequestList::from_bytes(&buffer).unwrap();
     assert!(before == after);
 }
 #[test]
 fn test_response_list() {
-    let before = ResponseList::new(
-        [
-            "test1".to_string(),
-            "test2".to_string(),
-            "test3".to_string(),
-        ]
-        .to_vec(),
-    );
-    let after = ResponseList::string_vec_from_iter(&mut before.to_iter()).unwrap();
+    #[derive(PartialEq)]
+    pub struct SizedBuffer([u8; 1024]);
+    impl AsRef<[u8]> for SizedBuffer {
+        fn as_ref(&self) -> &[u8] {
+            &self.0
+        }
+    }
+    impl<'a> From<&'a [u8]> for SizedBuffer {
+        fn from(value: &'a [u8]) -> Self {
+            Self(value.as_array().unwrap().clone())
+        }
+    }
+    let mut strings = [0u8; 1024];
+    strings[0..8].copy_from_slice(&3u64.to_le_bytes());
+    strings[8..16].copy_from_slice(&5u64.to_le_bytes());
+    strings[16..21].copy_from_slice("test1".as_bytes());
+    strings[21..29].copy_from_slice(&5u64.to_le_bytes());
+    strings[29..34].copy_from_slice("test2".as_bytes());
+    strings[34..42].copy_from_slice(&5u64.to_le_bytes());
+    strings[42..47].copy_from_slice("test3".as_bytes());
+    let mut strings_cursor = &strings as &[u8];
+    let before = ResponseList::new(Names::<SizedBuffer>::from_bytes(&mut strings_cursor).unwrap());
+    let mut buffer = [0; 1024];
+    for (to, from) in buffer.iter_mut().zip(before.to_iter()) {
+        *to = from;
+    }
+    let mut cursor = &buffer as &[u8];
+    let after = ResponseList::from_bytes(&mut cursor).unwrap();
     assert!(before == after);
 }

@@ -1,4 +1,4 @@
-use crate::{NextU64, Response};
+use crate::{FloreumError, Request, Response, read_u64};
 #[derive(Clone, PartialEq, Eq)]
 pub struct RequestDrop {
     pub descriptor: u64,
@@ -11,9 +11,8 @@ impl RequestDrop {
     pub fn to_iter(&self) -> impl Iterator<Item = u8> {
         self.descriptor.to_le_bytes().into_iter()
     }
-    pub fn from_iter(iter: &mut impl Iterator<Item = u8>) -> Option<Self> {
-        let descriptor = iter.next_u64()?;
-        Some(Self::new(descriptor))
+    pub fn from_bytes<'a>(bytes: &mut &'a [u8]) -> Result<Self, FloreumError> {
+        Ok(Self::new(read_u64(bytes)?))
     }
 }
 #[derive(Clone, PartialEq, Eq)]
@@ -23,25 +22,15 @@ impl ResponseDrop {
     pub fn new() -> Self {
         Self {}
     }
-    pub fn to_iter(&self) -> impl Iterator<Item = u8> {
-        (0..0).into_iter()
-    }
-    pub fn from_iter(_iter: &mut impl Iterator<Item = u8>) -> Option<Self> {
-        Some(Self {})
-    }
-    pub fn into_response<N: AsRef<str>, P: AsRef<[N]>, C: AsRef<[u8]>>(self) -> Response<N, P, C> {
-        Response::Drop(self)
-    }
 }
 #[test]
 fn test_request_drop() {
     let before = RequestDrop::new(12345);
-    let after = RequestDrop::from_iter(&mut before.to_iter()).unwrap();
-    assert!(before == after);
-}
-#[test]
-fn test_response_drop() {
-    let before = ResponseDrop::new();
-    let after = ResponseDrop::from_iter(&mut before.to_iter()).unwrap();
+    let mut buffer = [0; 1024];
+    for (to, from) in buffer.iter_mut().zip(before.to_iter()) {
+        *to = from;
+    }
+    let mut cursor = &buffer as &[u8];
+    let after = RequestDrop::from_bytes(&mut cursor).unwrap();
     assert!(before == after);
 }

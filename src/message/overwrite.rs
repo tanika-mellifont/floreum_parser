@@ -1,20 +1,21 @@
-use crate::{Direction, NextU64, Order, Response};
-#[cfg(feature = "alloc")]
-use alloc::vec::Vec;
+use crate::{
+    Direction, FloreumError, Order, Request, Response, read_content, read_direction, read_order,
+    read_u64,
+};
 #[derive(Clone, PartialEq, Eq)]
 pub struct RequestOverwrite<C: AsRef<[u8]>> {
     pub descriptor: u64,
-    pub cursor: Order,
-    pub location: Direction,
+    pub order: Order,
+    pub direction: Direction,
     pub content: C,
 }
 impl<C: AsRef<[u8]>> RequestOverwrite<C> {
     pub const KIND_TAG: u64 = 120;
-    pub fn new(descriptor: u64, cursor: Order, location: Direction, content: C) -> Self {
+    pub fn new(descriptor: u64, order: Order, direction: Direction, content: C) -> Self {
         Self {
             descriptor,
-            cursor,
-            location,
+            order,
+            direction,
             content,
         }
     }
@@ -22,8 +23,8 @@ impl<C: AsRef<[u8]>> RequestOverwrite<C> {
         self.descriptor
             .to_le_bytes()
             .into_iter()
-            .chain(self.cursor.to_iter())
-            .chain(self.location.to_iter())
+            .chain(self.order.to_iter())
+            .chain(self.direction.to_iter())
             .chain(
                 (self.content.as_ref().len() as u64)
                     .to_le_bytes()
@@ -32,15 +33,13 @@ impl<C: AsRef<[u8]>> RequestOverwrite<C> {
             )
     }
 }
-#[cfg(feature = "alloc")]
-impl RequestOverwrite<Vec<u8>> {
-    pub fn vec_from_iter(iter: &mut impl Iterator<Item = u8>) -> Option<Self> {
-        let descriptor = iter.next_u64()?;
-        let cursor = Order::from_iter(iter)?;
-        let location = Direction::from_iter(iter)?;
-        let content_count = iter.next_u64()?.try_into().ok()?;
-        let content = iter.take(content_count).collect();
-        Some(Self::new(descriptor, cursor, location, content))
+impl<C: AsRef<[u8]> + for<'a> From<&'a [u8]>> RequestOverwrite<C> {
+    pub fn from_bytes(bytes: &mut &[u8]) -> Result<Self, FloreumError> {
+        let descriptor = read_u64(bytes)?;
+        let order = read_order(bytes)?;
+        let direction = read_direction(bytes)?;
+        let content = read_content(bytes)?.into();
+        Ok(Self::new(descriptor, order, direction, content))
     }
 }
 #[derive(Clone, PartialEq, Eq)]
@@ -55,28 +54,49 @@ impl ResponseOverwrite {
     pub fn to_iter(&self) -> impl Iterator<Item = u8> {
         self.count.to_le_bytes().into_iter()
     }
-    pub fn from_iter(iter: &mut impl Iterator<Item = u8>) -> Option<Self> {
-        let count = iter.next_u64()?;
-        Some(Self { count })
-    }
-    pub fn into_response<N: AsRef<str>, P: AsRef<[N]>, C: AsRef<[u8]>>(self) -> Response<N, P, C> {
-        Response::Overwrite(self)
+    pub fn from_bytes(bytes: &mut &[u8]) -> Result<Self, FloreumError> {
+        let count = read_u64(bytes)?;
+        Ok(Self::new(count))
     }
 }
 #[test]
 fn test_request_overwrite() {
+    #[derive(PartialEq)]
+    pub struct SizedBuffer([u8; 1024]);
+    impl AsRef<[u8]> for SizedBuffer {
+        fn as_ref(&self) -> &[u8] {
+            &self.0
+        }
+    }
+    impl<'a> From<&'a [u8]> for SizedBuffer {
+        fn from(value: &'a [u8]) -> Self {
+            Self(value.as_array().unwrap().clone())
+        }
+    }
+    let mut test_array = [0; 1024];
+    test_array.copy_from_slice(b"test test test");
     let before = RequestOverwrite::new(
         12345,
         Order::After,
         Direction::Forward,
-        "test test".as_bytes().to_vec(),
+        SizedBuffer(test_array),
     );
-    let after = RequestOverwrite::vec_from_iter(&mut before.to_iter()).unwrap();
+    let mut buffer = [0; 1024];
+    for (to, from) in buffer.iter_mut().zip(before.to_iter()) {
+        *to = from;
+    }
+    let mut cursor = &buffer as &[u8];
+    let after = RequestOverwrite::from_bytes(&mut cursor).unwrap();
     assert!(before == after);
 }
 #[test]
 fn test_response_overwrite() {
     let before = ResponseOverwrite::new(12345);
-    let after = ResponseOverwrite::from_iter(&mut before.to_iter()).unwrap();
+    let mut buffer = [0; 1024];
+    for (to, from) in buffer.iter_mut().zip(before.to_iter()) {
+        *to = from;
+    }
+    let mut cursor = &buffer as &[u8];
+    let after = ResponseOverwrite::from_bytes(&mut cursor).unwrap();
     assert!(before == after);
 }

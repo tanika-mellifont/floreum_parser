@@ -1,8 +1,4 @@
-use crate::{Response, State};
-#[cfg(feature = "alloc")]
-use alloc::string::String;
-#[cfg(all(feature = "alloc", test))]
-use alloc::string::ToString;
+use crate::{FloreumError, State, read_state, read_str, read_u64};
 #[derive(Clone, PartialEq, Eq)]
 pub struct RequestRename<N: AsRef<str>> {
     pub descriptor: u64,
@@ -39,17 +35,13 @@ impl<N: AsRef<str>> RequestRename<N> {
             )
     }
 }
-#[cfg(feature = "alloc")]
-impl RequestRename<String> {
-    pub fn from_iter(iter: &mut impl Iterator<Item = u8>) -> Option<Self> {
-        use crate::NextU64;
-        let descriptor = iter.next_u64()?;
-        let state = State::from_iter(iter)?;
-        let from_count = iter.next_u64()?.try_into().ok()?;
-        let from = String::from_utf8(iter.take(from_count).collect()).ok()?;
-        let to_count = iter.next_u64()?.try_into().ok()?;
-        let to = String::from_utf8(iter.take(to_count).collect()).ok()?;
-        Some(Self::new(descriptor, state, from, to))
+impl<N: AsRef<str> + for<'a> From<&'a str>> RequestRename<N> {
+    pub fn from_bytes(bytes: &mut &[u8]) -> Result<Self, FloreumError> {
+        let descriptor = read_u64(bytes)?;
+        let state = read_state(bytes)?;
+        let from = read_str(bytes)?.into();
+        let to = read_str(bytes)?.into();
+        Ok(Self::new(descriptor, state, from, to))
     }
 }
 #[derive(Clone, PartialEq, Eq)]
@@ -59,30 +51,34 @@ impl ResponseRename {
     pub fn new() -> Self {
         Self {}
     }
-    pub fn to_iter(&self) -> impl Iterator<Item = u8> {
-        (0..0).into_iter()
-    }
-    pub fn from_iter(_iter: &mut impl Iterator<Item = u8>) -> Option<Self> {
-        Some(Self {})
-    }
-    pub fn into_response<N: AsRef<str>, P: AsRef<[N]>, C: AsRef<[u8]>>(self) -> Response<N, P, C> {
-        Response::Rename(self)
-    }
 }
 #[test]
 fn test_request_rename() {
+    #[derive(PartialEq)]
+    pub struct SizedString([u8; 1024]);
+    impl AsRef<str> for SizedString {
+        fn as_ref(&self) -> &str {
+            str::from_utf8(&self.0).unwrap()
+        }
+    }
+    impl<'a> From<&'a str> for SizedString {
+        fn from(value: &'a str) -> Self {
+            Self(value.as_bytes().as_array().unwrap().clone())
+        }
+    }
+    let mut test_array = [0; 1024];
+    test_array.copy_from_slice(b"test test test");
     let before = RequestRename::new(
         12345,
         State::default(),
-        "test1".to_string(),
-        "test2".to_string(),
+        SizedString(test_array),
+        SizedString(test_array),
     );
-    let after = RequestRename::from_iter(&mut before.to_iter()).unwrap();
-    assert!(before == after);
-}
-#[test]
-fn test_response_rename() {
-    let before = ResponseRename::new();
-    let after = ResponseRename::from_iter(&mut before.to_iter()).unwrap();
+    let mut buffer = [0; 1024];
+    for (to, from) in buffer.iter_mut().zip(before.to_iter()) {
+        *to = from;
+    }
+    let mut cursor = &buffer as &[u8];
+    let after = RequestRename::from_bytes(&mut cursor).unwrap();
     assert!(before == after);
 }

@@ -1,8 +1,4 @@
-use crate::{NextU64, Response, State};
-#[cfg(feature = "alloc")]
-use alloc::string::String;
-#[cfg(all(feature = "alloc", test))]
-use alloc::string::ToString;
+use crate::{FloreumError, Request, Response, State, read_state, read_str, read_u64};
 #[derive(Clone, PartialEq, Eq)]
 pub struct RequestMake<N: AsRef<str>> {
     pub descriptor: u64,
@@ -31,14 +27,12 @@ impl<N: AsRef<str>> RequestMake<N> {
             )
     }
 }
-#[cfg(feature = "alloc")]
-impl RequestMake<String> {
-    pub fn from_iter(iter: &mut impl Iterator<Item = u8>) -> Option<Self> {
-        let descriptor = iter.next_u64()?;
-        let state = State::from_iter(iter)?;
-        let name_count = iter.next_u64()?.try_into().ok()?;
-        let name = String::from_utf8(iter.take(name_count).collect()).ok()?;
-        Some(Self::new(descriptor, state, name))
+impl<N: AsRef<str> + for<'a> From<&'a str>> RequestMake<N> {
+    pub fn from_bytes(bytes: &mut &[u8]) -> Result<Self, FloreumError> {
+        let descriptor = read_u64(bytes)?;
+        let state = read_state(bytes)?;
+        let name = read_str(bytes)?.into();
+        Ok(Self::new(descriptor, state, name))
     }
 }
 #[derive(Clone, PartialEq, Eq)]
@@ -53,23 +47,44 @@ impl ResponseMake {
     pub fn to_iter(&self) -> impl Iterator<Item = u8> {
         self.descriptor.to_le_bytes().into_iter()
     }
-    pub fn from_iter(iter: &mut impl Iterator<Item = u8>) -> Option<Self> {
-        let descriptor = iter.next_u64()?;
-        Some(Self::new(descriptor))
-    }
-    pub fn into_response<N: AsRef<str>, P: AsRef<[N]>, C: AsRef<[u8]>>(self) -> Response<N, P, C> {
-        Response::Make(self)
+    pub fn from_bytes(bytes: &mut &[u8]) -> Result<Self, FloreumError> {
+        let descriptor = read_u64(bytes)?;
+        Ok(Self::new(descriptor))
     }
 }
 #[test]
 fn test_request_make() {
-    let before = RequestMake::new(12345, State::default(), "test".to_string());
-    let after = RequestMake::from_iter(&mut before.to_iter()).unwrap();
+    #[derive(PartialEq)]
+    pub struct SizedString([u8; 1024]);
+    impl AsRef<str> for SizedString {
+        fn as_ref(&self) -> &str {
+            str::from_utf8(&self.0).unwrap()
+        }
+    }
+    impl<'a> From<&'a str> for SizedString {
+        fn from(value: &'a str) -> Self {
+            Self(value.as_bytes().as_array().unwrap().clone())
+        }
+    }
+    let mut test_array = [0; 1024];
+    test_array.copy_from_slice(b"test test test");
+    let before = RequestMake::new(12345, State::default(), SizedString(test_array));
+    let mut buffer = [0; 1024];
+    for (to, from) in buffer.iter_mut().zip(before.to_iter()) {
+        *to = from;
+    }
+    let mut cursor = &buffer as &[u8];
+    let after = RequestMake::from_bytes(&mut cursor).unwrap();
     assert!(before == after);
 }
 #[test]
 fn test_response_make() {
     let before = ResponseMake::new(12345);
-    let after = ResponseMake::from_iter(&mut before.to_iter()).unwrap();
+    let mut buffer = [0; 1024];
+    for (to, from) in buffer.iter_mut().zip(before.to_iter()) {
+        *to = from;
+    }
+    let mut cursor = &buffer as &[u8];
+    let after = ResponseMake::from_bytes(&mut cursor).unwrap();
     assert!(before == after);
 }
