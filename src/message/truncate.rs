@@ -1,5 +1,5 @@
 use crate::{Direction, FloreumError, read_direction, read_u64};
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RequestTruncate {
     pub descriptor: u64,
     pub direction: Direction,
@@ -26,7 +26,7 @@ impl RequestTruncate {
         Ok(Self::new(descriptor, direction))
     }
 }
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ResponseTruncate {
     pub count: u64,
 }

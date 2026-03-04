@@ -1,5 +1,5 @@
 use crate::{FloreumError, State, names::Names, read_state, read_u64};
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RequestWalk<C: AsRef<[u8]>> {
     pub descriptor: u64,
     pub state: State,
@@ -30,7 +30,7 @@ impl<C: AsRef<[u8]> + for<'a> From<&'a [u8]>> RequestWalk<C> {
         Ok(Self::new(descriptor, state, names))
     }
 }
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ResponseWalk {
     pub descriptor: u64,
 }
@@ -58,24 +58,39 @@ fn test_request_walk() {
     }
     impl<'a> From<&'a [u8]> for SizedBuffer {
         fn from(value: &'a [u8]) -> Self {
-            Self(value.as_array().unwrap().clone())
+            let mut buffer = [0; 1024];
+            for (to, from) in buffer.iter_mut().zip(value.iter()) {
+                *to = *from;
+            }
+            Self(buffer)
         }
     }
-    let mut strings = [0u8; 1024];
-    strings[0..8].copy_from_slice(&3u64.to_le_bytes());
-    strings[8..16].copy_from_slice(&5u64.to_le_bytes());
-    strings[16..21].copy_from_slice("test1".as_bytes());
-    strings[21..29].copy_from_slice(&5u64.to_le_bytes());
-    strings[29..34].copy_from_slice("test2".as_bytes());
-    strings[34..42].copy_from_slice(&5u64.to_le_bytes());
-    strings[42..47].copy_from_slice("test3".as_bytes());
-    let mut strings_cursor = &strings as &[u8];
+    let mut strings_buffer = [0u8; 2048];
+    let strings = ["test1", "test2", "test3"];
+    for (to, from) in
+        strings_buffer
+            .iter_mut()
+            .zip(
+                (strings.len() as u64)
+                    .to_le_bytes()
+                    .into_iter()
+                    .chain(strings.iter().flat_map(|string| {
+                        (string.len() as u64)
+                            .to_le_bytes()
+                            .into_iter()
+                            .chain(string.as_bytes().iter().copied())
+                    })),
+            )
+    {
+        *to = from;
+    }
+    let mut strings_cursor = &strings_buffer as &[u8];
     let before = RequestWalk::new(
         12345,
         State::default(),
         Names::<SizedBuffer>::from_bytes(&mut strings_cursor).unwrap(),
     );
-    let mut buffer = [0; 1024];
+    let mut buffer = [0; 4096];
     for (to, from) in buffer.iter_mut().zip(before.to_iter()) {
         *to = from;
     }
@@ -83,7 +98,6 @@ fn test_request_walk() {
     let after = RequestWalk::from_bytes(&mut cursor).unwrap();
     assert!(before == after);
 }
-
 #[test]
 fn test_response_walk() {
     let before = ResponseWalk::new(12345);

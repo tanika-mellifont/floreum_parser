@@ -1,5 +1,5 @@
 use crate::{FloreumError, Order, names::Names, read_order, read_u64};
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RequestList {
     pub descriptor: u64,
     pub cursor: Order,
@@ -28,7 +28,7 @@ impl RequestList {
         Ok(Self::new(descriptor, cursor, count))
     }
 }
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ResponseList<C: AsRef<[u8]>> {
     pub names: Names<C>,
 }
@@ -60,7 +60,7 @@ fn test_request_list() {
 #[test]
 fn test_response_list() {
     #[derive(PartialEq)]
-    pub struct SizedBuffer([u8; 1024]);
+    pub struct SizedBuffer([u8; 128]);
     impl AsRef<[u8]> for SizedBuffer {
         fn as_ref(&self) -> &[u8] {
             &self.0
@@ -71,17 +71,12 @@ fn test_response_list() {
             Self(value.as_array().unwrap().clone())
         }
     }
-    let mut strings = [0u8; 1024];
-    strings[0..8].copy_from_slice(&3u64.to_le_bytes());
-    strings[8..16].copy_from_slice(&5u64.to_le_bytes());
-    strings[16..21].copy_from_slice("test1".as_bytes());
-    strings[21..29].copy_from_slice(&5u64.to_le_bytes());
-    strings[29..34].copy_from_slice("test2".as_bytes());
-    strings[34..42].copy_from_slice(&5u64.to_le_bytes());
-    strings[42..47].copy_from_slice("test3".as_bytes());
-    let mut strings_cursor = &strings as &[u8];
-    let before = ResponseList::new(Names::<SizedBuffer>::from_bytes(&mut strings_cursor).unwrap());
-    let mut buffer = [0; 1024];
+    let mut test_array = [0; 128];
+    let test_bytes = b"test test test";
+    test_array[..test_bytes.len()].copy_from_slice(test_bytes);
+    let mut array_cursor = &test_array as &[u8];
+    let before = ResponseList::new(Names::<SizedBuffer>::from_bytes(&mut array_cursor).unwrap());
+    let mut buffer = [0; 2048];
     for (to, from) in buffer.iter_mut().zip(before.to_iter()) {
         *to = from;
     }

@@ -3,6 +3,7 @@ use crate::{
     RequestOverwrite, RequestPoint, RequestRead, RequestRemove, RequestRename, RequestSeek,
     RequestState, RequestTell, RequestTruncate, RequestWalk,
 };
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Request<N: AsRef<str>, C: AsRef<[u8]>> {
     Drop(RequestDrop),
     State(RequestState),

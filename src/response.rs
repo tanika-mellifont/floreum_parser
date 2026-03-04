@@ -3,6 +3,7 @@ use crate::{
     ResponseMake, ResponseOverwrite, ResponsePoint, ResponseRead, ResponseRemove, ResponseRename,
     ResponseSeek, ResponseState, ResponseTell, ResponseTruncate, ResponseWalk,
 };
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Response<C: AsRef<[u8]>> {
     Error(ResponseError),
     Drop(ResponseDrop),
@@ -24,7 +25,7 @@ pub enum Response<C: AsRef<[u8]>> {
 }
 impl<C: AsRef<[u8]>> From<ResponseDrop> for Response<C> {
     fn from(value: ResponseDrop) -> Self {
-        Response::Drop(value)
+        Self::Drop(value)
     }
 }
 impl<C: AsRef<[u8]>> From<ResponseState> for Response<C> {

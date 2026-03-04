@@ -1,23 +1,24 @@
 request.rs and response.rs, both all impl From
 add truncate request
 reorder mods
-DONE /\/\/\
-TODO \/\/\/
 check kind tags
-make errors not ()
-request and response structs, with From impls
-from_iter where possible
 make everything use Self
-check everything uses the right types
 conditionally implement clone
-check everything derives as much as possible
-check what should and shouldn't be in the main impl
-remove all phantoms
 check formatting
 remove wheres
+check everything derives as much as possible
+check everything uses the right types
+remove all phantoms
+remove unused imports
+license
 cargo fmt
 doc compile
-remove unused imports
+DONE /\/\/\
+TODO \/\/\/
+from_iter where possible
+check all .len()'s in to_iter calls
+check what should and shouldn't be in the main impl
+remove as's
 examples
 check for each type:
 - new
@@ -26,6 +27,7 @@ check for each type:
 - request from _request
 - response from _response
 rust-analyzer checklist
+fix Cargo.toml
 
 versioning:
 A.B.C

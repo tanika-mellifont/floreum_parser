@@ -1,5 +1,5 @@
 use crate::{FloreumError, Order, State, read_order, read_state, read_str, read_u64};
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RequestBind<N: AsRef<str>> {
     pub descriptor: u64,
     pub new: u64,
@@ -36,17 +36,15 @@ impl<N: AsRef<str>> RequestBind<N> {
 impl<'a, N: AsRef<str> + From<&'a str>> RequestBind<N> {
     pub fn from_bytes(bytes: &mut &'a [u8]) -> Result<Self, FloreumError> {
         Ok(Self::new(
-            read_u64(bytes).map_or(Err(FloreumError::Truncation), |value| Ok(value))?,
-            read_u64(bytes).map_or(Err(FloreumError::Truncation), |value| Ok(value))?,
-            read_order(bytes).map_or(Err(FloreumError::Truncation), |value| Ok(value))?,
-            read_state(bytes).map_or(Err(FloreumError::Truncation), |value| Ok(value))?,
-            read_str(bytes)
-                .map_or(Err(FloreumError::Truncation), |value| Ok(value))?
-                .into(),
+            read_u64(bytes)?,
+            read_u64(bytes)?,
+            read_order(bytes)?,
+            read_state(bytes)?,
+            read_str(bytes)?.into(),
         ))
     }
 }
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ResponseBind {}
 impl ResponseBind {
     pub const KIND_TAG: u64 = 161;

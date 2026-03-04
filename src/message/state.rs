@@ -1,5 +1,5 @@
 use crate::{FloreumError, State, read_state, read_u64};
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RequestState {
     pub descriptor: u64,
 }
@@ -16,7 +16,7 @@ impl RequestState {
         Ok(Self::new(descriptor))
     }
 }
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ResponseState {
     state: State,
 }

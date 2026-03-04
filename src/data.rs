@@ -1,6 +1,5 @@
 use crate::FloreumError;
-
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Head {
     Forward,
     Backward,
@@ -23,7 +22,7 @@ impl Head {
             .into_iter()
     }
 }
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Direction {
     Forward,
     Backward,
@@ -40,7 +39,7 @@ impl Direction {
             .into_iter()
     }
 }
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Order {
     Before,
     After,
@@ -57,7 +56,7 @@ impl Order {
             .into_iter()
     }
 }
-#[derive(Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct State {
     pub walk: bool,
     pub make: bool,
@@ -126,7 +125,7 @@ impl State {
         .iter_mut()
         .enumerate()
         {
-            *buffer.get_mut(index).unwrap() = if *value { 1 } else { 0 };
+            buffer[index] = if *value { 1 } else { 0 };
         }
         buffer.into_iter()
     }
@@ -154,87 +153,110 @@ state_chain!(with_tell, tell);
 state_chain!(with_bind_before, bind_before);
 #[cfg(feature = "bind")]
 state_chain!(with_bind_after, bind_after);
-fn read<'a>(bytes: &mut &'a [u8], len: usize) -> Result<&'a [u8], FloreumError> {
-    let (head, tail) = bytes
-        .split_at_checked(len)
-        .map_or(Err(FloreumError::Truncation), |ok| Ok(ok))?;
+fn read<'a>(bytes: &mut &'a [u8], len: usize) -> Option<&'a [u8]> {
+    let (head, tail) = bytes.split_at_checked(len)?;
     *bytes = tail;
-    Ok(head)
+    Some(head)
 }
 pub fn read_bool(bytes: &mut &[u8]) -> Result<bool, FloreumError> {
-    Ok(*read(bytes, 1)?
+    let value = *read(bytes, 1)
+        .map_or(Err(FloreumError::TruncatedBool), |ok| Ok(ok))?
         .get(0)
-        .map_or(Err(FloreumError::Truncation), |ok| Ok(ok))?
-        != 0)
+        .map_or(Err(FloreumError::TruncatedBool), |ok| Ok(ok))?;
+    if value == 0 {
+        Ok(false)
+    } else if value == 1 {
+        Ok(true)
+    } else {
+        Err(FloreumError::DomainBool { received: value })
+    }
 }
 pub fn read_u64(bytes: &mut &[u8]) -> Result<u64, FloreumError> {
     Ok(u64::from_le_bytes(
-        read(bytes, 8)?
+        read(bytes, 8)
+            .map_or(Err(FloreumError::TruncatedU64), |ok| Ok(ok))?
             .as_array()
             .map_or(Err(FloreumError::LocalBitWidth), |ok| Ok(ok))
             .copied()?,
     ))
 }
 pub fn read_head(bytes: &mut &[u8]) -> Result<Head, FloreumError> {
-    Ok(match read_u64(bytes)? {
-        Head::FORWARD => Head::Forward,
-        Head::BACKWARD => Head::Backward,
-        Head::START => Head::Start,
-        Head::END => Head::End,
-        _ => Err(FloreumError::Domain)?,
-    })
+    Ok(
+        match read_u64(bytes).map_err(|_| FloreumError::TruncatedHead)? {
+            Head::FORWARD => Head::Forward,
+            Head::BACKWARD => Head::Backward,
+            Head::START => Head::Start,
+            Head::END => Head::End,
+            received => Err(FloreumError::DomainHead { received })?,
+        },
+    )
 }
 pub fn read_direction(bytes: &mut &[u8]) -> Result<Direction, FloreumError> {
-    Ok(match read_u64(bytes)? {
-        Direction::FORWARD => Direction::Forward,
-        Direction::BACKWARD => Direction::Backward,
-        _ => Err(FloreumError::Domain)?,
-    })
+    Ok(
+        match read_u64(bytes).map_err(|_| FloreumError::TruncatedDirection)? {
+            Direction::FORWARD => Direction::Forward,
+            Direction::BACKWARD => Direction::Backward,
+            received => Err(FloreumError::DomainDirection { received })?,
+        },
+    )
 }
 pub fn read_order(bytes: &mut &[u8]) -> Result<Order, FloreumError> {
-    Ok(match read_u64(bytes)? {
-        Order::BEFORE => Order::Before,
-        Order::AFTER => Order::After,
-        _ => Err(FloreumError::Domain)?,
-    })
+    Ok(
+        match read_u64(bytes).map_err(|_| FloreumError::TruncatedOrder)? {
+            Order::BEFORE => Order::Before,
+            Order::AFTER => Order::After,
+            received => Err(FloreumError::DomainOrder { received })?,
+        },
+    )
 }
 pub fn read_state(bytes: &mut &[u8]) -> Result<State, FloreumError> {
+    let mut aligned =
+        read(bytes, 3 * size_of::<u64>()).map_or(Err(FloreumError::TruncatedState), |ok| Ok(ok))?;
     Ok(State {
-        walk: read_bool(bytes)?,
-        make: read_bool(bytes)?,
-        remove: read_bool(bytes)?,
-        rename: read_bool(bytes)?,
-        read_peek: read_bool(bytes)?,
-        read_seek: read_bool(bytes)?,
-        insert_forward: read_bool(bytes)?,
-        insert_backward: read_bool(bytes)?,
-        overwrite_forward_peek: read_bool(bytes)?,
-        overwrite_forward_seek: read_bool(bytes)?,
-        overwrite_backward_peek: read_bool(bytes)?,
-        overwrite_backward_seek: read_bool(bytes)?,
-        truncate_forward: read_bool(bytes)?,
-        truncate_backward: read_bool(bytes)?,
-        seek_forward: read_bool(bytes)?,
-        seek_backward: read_bool(bytes)?,
-        seek_start: read_bool(bytes)?,
-        seek_end: read_bool(bytes)?,
-        tell: read_bool(bytes)?,
-        bind_before: read_bool(bytes)?,
-        bind_after: read_bool(bytes)?,
+        walk: read_bool(&mut aligned)?,
+        make: read_bool(&mut aligned)?,
+        remove: read_bool(&mut aligned)?,
+        rename: read_bool(&mut aligned)?,
+        read_peek: read_bool(&mut aligned)?,
+        read_seek: read_bool(&mut aligned)?,
+        insert_forward: read_bool(&mut aligned)?,
+        insert_backward: read_bool(&mut aligned)?,
+        overwrite_forward_peek: read_bool(&mut aligned)?,
+        overwrite_forward_seek: read_bool(&mut aligned)?,
+        overwrite_backward_peek: read_bool(&mut aligned)?,
+        overwrite_backward_seek: read_bool(&mut aligned)?,
+        truncate_forward: read_bool(&mut aligned)?,
+        truncate_backward: read_bool(&mut aligned)?,
+        seek_forward: read_bool(&mut aligned)?,
+        seek_backward: read_bool(&mut aligned)?,
+        seek_start: read_bool(&mut aligned)?,
+        seek_end: read_bool(&mut aligned)?,
+        tell: read_bool(&mut aligned)?,
+        bind_before: read_bool(&mut aligned)?,
+        bind_after: read_bool(&mut aligned)?,
     })
 }
 pub fn read_content<'a>(bytes: &mut &'a [u8]) -> Result<&'a [u8], FloreumError> {
-    let len = read_u64(bytes)?;
-    Ok(read(
+    let len = read_u64(bytes).map_err(|_| FloreumError::TruncatedContentLen)?;
+    read(
         bytes,
         len.try_into().map_err(|_| FloreumError::LocalBitWidth)?,
-    )?)
+    )
+    .map_or(
+        Err(FloreumError::TruncatedContent { expected: len }),
+        |ok| Ok(ok),
+    )
 }
 pub fn read_str<'a>(bytes: &mut &'a [u8]) -> Result<&'a str, FloreumError> {
-    let len = read_u64(bytes).map_or(Err(FloreumError::Truncation), |len| Ok(len))?;
-    str::from_utf8(read(
-        bytes,
-        len.try_into().map_err(|_| FloreumError::LocalBitWidth)?,
-    )?)
+    let len = read_u64(bytes).map_or(Err(FloreumError::TruncatedStrLen), |len| Ok(len))?;
+    str::from_utf8(
+        read(
+            bytes,
+            len.try_into().map_err(|_| FloreumError::LocalBitWidth)?,
+        )
+        .map_or(Err(FloreumError::TruncatedStr { expected: len }), |ok| {
+            Ok(ok)
+        })?,
+    )
     .map_err(|_| FloreumError::Utf8)
 }

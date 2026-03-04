@@ -1,5 +1,5 @@
 use crate::{Direction, FloreumError, Order, read_content, read_direction, read_order, read_u64};
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RequestOverwrite<C: AsRef<[u8]>> {
     pub descriptor: u64,
     pub order: Order,
@@ -39,7 +39,7 @@ impl<C: AsRef<[u8]> + for<'a> From<&'a [u8]>> RequestOverwrite<C> {
         Ok(Self::new(descriptor, order, direction, content))
     }
 }
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ResponseOverwrite {
     pub count: u64,
 }
@@ -59,7 +59,7 @@ impl ResponseOverwrite {
 #[test]
 fn test_request_overwrite() {
     #[derive(PartialEq)]
-    pub struct SizedBuffer([u8; 1024]);
+    pub struct SizedBuffer([u8; 128]);
     impl AsRef<[u8]> for SizedBuffer {
         fn as_ref(&self) -> &[u8] {
             &self.0
@@ -70,8 +70,10 @@ fn test_request_overwrite() {
             Self(value.as_array().unwrap().clone())
         }
     }
-    let mut test_array = [0; 1024];
-    test_array.copy_from_slice(b"test test test");
+    let mut test_array = [0; 128];
+    let test_bytes = b"test test test";
+    test_array[..test_bytes.len()].copy_from_slice(test_bytes);
+    test_array[..test_bytes.len()].copy_from_slice(test_bytes);
     let before = RequestOverwrite::new(
         12345,
         Order::After,

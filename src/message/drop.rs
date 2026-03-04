@@ -1,5 +1,5 @@
 use crate::{FloreumError, read_u64};
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RequestDrop {
     pub descriptor: u64,
 }
@@ -15,7 +15,7 @@ impl RequestDrop {
         Ok(Self::new(read_u64(bytes)?))
     }
 }
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ResponseDrop {}
 impl ResponseDrop {
     pub const KIND_TAG: u64 = 11;

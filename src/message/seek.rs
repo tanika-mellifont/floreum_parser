@@ -1,5 +1,5 @@
 use crate::{FloreumError, Head, read_head, read_u64};
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RequestSeek {
     pub descriptor: u64,
     pub head: Head,
@@ -28,7 +28,7 @@ impl RequestSeek {
         Ok(Self::new(descriptor, head, offset))
     }
 }
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ResponseSeek {}
 impl ResponseSeek {
     pub const KIND_TAG: u64 = 141;

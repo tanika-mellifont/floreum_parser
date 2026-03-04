@@ -10,6 +10,7 @@ pub use error::*;
 pub use message::*;
 pub use request::*;
 pub use response::*;
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Message<N: AsRef<str>, C: AsRef<[u8]>> {
     RequestDrop(RequestDrop),
     RequestState(RequestState),

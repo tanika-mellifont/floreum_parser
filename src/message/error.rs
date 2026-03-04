@@ -1,4 +1,4 @@
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ResponseError {}
 impl ResponseError {
     pub const KIND_TAG: u64 = 1;

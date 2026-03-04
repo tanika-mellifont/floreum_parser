@@ -1,18 +1,16 @@
 use crate::{FloreumError, Order, read_content, read_order, read_u64};
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RequestInsert<C: AsRef<[u8]>> {
     pub descriptor: u64,
     pub order: Order,
-    pub length: u64,
     pub content: C,
 }
 impl<C: AsRef<[u8]>> RequestInsert<C> {
     pub const KIND_TAG: u64 = 110;
-    pub fn new(descriptor: u64, order: Order, length: u64, content: C) -> Self {
+    pub fn new(descriptor: u64, order: Order, content: C) -> Self {
         Self {
             descriptor,
             order,
-            length,
             content,
         }
     }
@@ -22,7 +20,7 @@ impl<C: AsRef<[u8]>> RequestInsert<C> {
             .into_iter()
             .chain(self.order.to_iter().into_iter())
             .chain(
-                (self.length as u64)
+                (self.content.as_ref().len() as u64)
                     .to_le_bytes()
                     .into_iter()
                     .chain(self.content.as_ref().iter().cloned()),
@@ -31,15 +29,13 @@ impl<C: AsRef<[u8]>> RequestInsert<C> {
 }
 impl<C: AsRef<[u8]> + for<'a> From<&'a [u8]>> RequestInsert<C> {
     pub fn from_bytes(bytes: &mut &[u8]) -> Result<Self, FloreumError> {
-        Ok(Self::new(
-            read_u64(bytes)?,
-            read_order(bytes)?,
-            read_u64(bytes)?,
-            read_content(bytes)?.into(),
-        ))
+        let descriptor = read_u64(bytes)?;
+        let order = read_order(bytes)?;
+        let content = read_content(bytes)?.into();
+        Ok(Self::new(descriptor, order, content))
     }
 }
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ResponseInsert {
     pub count: u64,
 }
@@ -57,10 +53,22 @@ impl ResponseInsert {
 }
 #[test]
 fn test_request_insert() {
-    extern crate alloc;
-    use alloc::{vec, vec::Vec};
-    let before: RequestInsert<Vec<u8>> =
-        RequestInsert::new(12345, Order::After, 5, vec![1, 2, 3, 4, 5]);
+    #[derive(PartialEq)]
+    pub struct SizedBuffer([u8; 64]);
+    impl AsRef<[u8]> for SizedBuffer {
+        fn as_ref(&self) -> &[u8] {
+            &self.0
+        }
+    }
+    impl<'a> From<&'a [u8]> for SizedBuffer {
+        fn from(value: &'a [u8]) -> Self {
+            Self(value.as_array().unwrap().clone())
+        }
+    }
+    let mut test_array = [0; 64];
+    let test_bytes = b"test test test";
+    test_array[..test_bytes.len()].copy_from_slice(test_bytes);
+    let before = RequestInsert::new(12345, Order::Before, SizedBuffer(test_array));
     let mut buffer = [0; 1024];
     for (to, from) in buffer.iter_mut().zip(before.to_iter()) {
         *to = from;

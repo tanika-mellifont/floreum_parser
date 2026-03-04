@@ -1,5 +1,5 @@
 use crate::{FloreumError, State, read_state, read_str, read_u64};
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RequestMake<N: AsRef<str>> {
     pub descriptor: u64,
     pub state: State,
@@ -35,7 +35,7 @@ impl<N: AsRef<str> + for<'a> From<&'a str>> RequestMake<N> {
         Ok(Self::new(descriptor, state, name))
     }
 }
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ResponseMake {
     pub descriptor: u64,
 }
@@ -55,7 +55,7 @@ impl ResponseMake {
 #[test]
 fn test_request_make() {
     #[derive(PartialEq)]
-    pub struct SizedString([u8; 1024]);
+    pub struct SizedString([u8; 128]);
     impl AsRef<str> for SizedString {
         fn as_ref(&self) -> &str {
             str::from_utf8(&self.0).unwrap()
@@ -66,8 +66,9 @@ fn test_request_make() {
             Self(value.as_bytes().as_array().unwrap().clone())
         }
     }
-    let mut test_array = [0; 1024];
-    test_array.copy_from_slice(b"test test test");
+    let mut test_array = [0; 128];
+    let test_bytes = b"test test test";
+    test_array[..test_bytes.len()].copy_from_slice(test_bytes);
     let before = RequestMake::new(12345, State::default(), SizedString(test_array));
     let mut buffer = [0; 1024];
     for (to, from) in buffer.iter_mut().zip(before.to_iter()) {

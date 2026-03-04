@@ -1,5 +1,5 @@
 use crate::{FloreumError, Order, read_content, read_order, read_u64};
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RequestRead {
     pub descriptor: u64,
     pub order: Order,
@@ -28,7 +28,7 @@ impl RequestRead {
         Ok(Self::new(descriptor, order, count))
     }
 }
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ResponseRead<C: AsRef<[u8]>> {
     pub content: C,
 }
@@ -38,9 +38,7 @@ impl<C: AsRef<[u8]>> ResponseRead<C> {
         Self { content }
     }
     pub fn to_iter(&self) -> impl Iterator<Item = u8> {
-        self.content
-            .as_ref()
-            .len()
+        (self.content.as_ref().len() as u64)
             .to_le_bytes()
             .into_iter()
             .chain(self.content.as_ref().iter().copied())
@@ -66,7 +64,7 @@ fn test_request_read() {
 #[test]
 fn test_response_read() {
     #[derive(PartialEq)]
-    pub struct SizedBuffer([u8; 1024]);
+    pub struct SizedBuffer([u8; 128]);
     impl AsRef<[u8]> for SizedBuffer {
         fn as_ref(&self) -> &[u8] {
             &self.0
@@ -77,8 +75,9 @@ fn test_response_read() {
             Self(value.as_array().unwrap().clone())
         }
     }
-    let mut test_array = [0; 1024];
-    test_array.copy_from_slice(b"test test test");
+    let mut test_array = [0; 128];
+    let test_bytes = b"test test test";
+    test_array[..test_bytes.len()].copy_from_slice(test_bytes);
     let before = ResponseRead::new(SizedBuffer(test_array));
     let mut buffer = [0; 1024];
     for (to, from) in buffer.iter_mut().zip(before.to_iter()) {

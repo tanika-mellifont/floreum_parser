@@ -1,5 +1,5 @@
 use crate::{FloreumError, read_str, read_u64};
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RequestRemove<N: AsRef<str>> {
     pub descriptor: u64,
     pub name: N,
@@ -25,7 +25,7 @@ impl<N: AsRef<str> + for<'a> From<&'a str>> RequestRemove<N> {
         Ok(Self::new(descriptor, name))
     }
 }
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ResponseRemove {}
 impl ResponseRemove {
     pub const KIND_TAG: u64 = 81;
@@ -36,7 +36,7 @@ impl ResponseRemove {
 #[test]
 fn test_request_remove() {
     #[derive(PartialEq)]
-    pub struct SizedString([u8; 1024]);
+    pub struct SizedString([u8; 128]);
     impl AsRef<str> for SizedString {
         fn as_ref(&self) -> &str {
             str::from_utf8(&self.0).unwrap()
@@ -47,8 +47,9 @@ fn test_request_remove() {
             Self(value.as_bytes().as_array().unwrap().clone())
         }
     }
-    let mut test_array = [0; 1024];
-    test_array.copy_from_slice(b"test test test");
+    let mut test_array = [0; 128];
+    let test_bytes = b"test test test";
+    test_array[..test_bytes.len()].copy_from_slice(test_bytes);
     let before = RequestRemove::new(12345, SizedString(test_array));
     let mut buffer = [0; 1024];
     for (to, from) in buffer.iter_mut().zip(before.to_iter()) {
