@@ -59,28 +59,36 @@ fn test_request_list() {
 }
 #[test]
 fn test_response_list() {
-    #[derive(PartialEq)]
-    pub struct SizedBuffer([u8; 128]);
-    impl AsRef<[u8]> for SizedBuffer {
+    const DATA_SIZE: usize = 8 + 8 + 14;
+    #[derive(Debug, PartialEq)]
+    struct ExactBuffer([u8; DATA_SIZE]);
+    impl AsRef<[u8]> for ExactBuffer {
         fn as_ref(&self) -> &[u8] {
             &self.0
         }
     }
-    impl<'a> From<&'a [u8]> for SizedBuffer {
+    impl<'a> From<&'a [u8]> for ExactBuffer {
         fn from(value: &'a [u8]) -> Self {
-            Self(value.as_array().unwrap().clone())
+            let mut arr = [0; DATA_SIZE];
+            arr.copy_from_slice(value);
+            ExactBuffer(arr)
         }
     }
-    let mut test_array = [0; 128];
-    let test_bytes = b"test test test";
-    test_array[..test_bytes.len()].copy_from_slice(test_bytes);
-    let mut array_cursor = &test_array as &[u8];
-    let before = ResponseList::new(Names::<SizedBuffer>::from_bytes(&mut array_cursor).unwrap());
-    let mut buffer = [0; 2048];
-    for (to, from) in buffer.iter_mut().zip(before.to_iter()) {
-        *to = from;
+    let mut names_bytes = [0u8; DATA_SIZE];
+    let mut pos = 0;
+    names_bytes[pos..pos + 8].copy_from_slice(&1u64.to_le_bytes());
+    pos += 8;
+    names_bytes[pos..pos + 8].copy_from_slice(&14u64.to_le_bytes());
+    pos += 8;
+    names_bytes[pos..pos + 14].copy_from_slice(b"test test test");
+    let mut cursor = &names_bytes[..];
+    let names = Names::<ExactBuffer>::from_bytes(&mut cursor).unwrap();
+    let before = ResponseList::new(names);
+    let mut serialized = [0u8; DATA_SIZE];
+    for (dst, src) in serialized.iter_mut().zip(before.to_iter()) {
+        *dst = src;
     }
-    let mut cursor = &buffer as &[u8];
+    let mut cursor = &serialized[..];
     let after = ResponseList::from_bytes(&mut cursor).unwrap();
-    assert!(before == after);
+    assert_eq!(before, after);
 }
