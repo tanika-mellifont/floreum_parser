@@ -1,5 +1,11 @@
 # Floreum Parser
+
 Serialisation/deserialisation primitives for Floreum messages.
+
+## AI Policy
+
+Use of generative AI is not restricted, but contributors will be held accountable for the quality of code submitted.
+
 ## License
 
 Licensed under either of
