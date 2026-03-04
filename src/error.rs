@@ -18,6 +18,7 @@ pub enum FloreumError {
     DomainOrder { received: u64 },
     LocalBitWidth,
     Utf8,
+    UnknownKind {kind: u64},
 }
 impl Display for FloreumError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
