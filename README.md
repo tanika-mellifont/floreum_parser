@@ -1,4 +1,4 @@
-# floreum_parse
+# Floreum Parser
 Serialisation/deserialisation primitives for Floreum messages.
 ## License
 
