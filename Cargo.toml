@@ -1,12 +1,16 @@
 [package]
 name = "floreum_parser"
-version = "0.1.0"
+version = "1.0.0"
+authors = ["Tanika Mellifont-Young <tanika.young@proton.me>"]
 edition = "2024"
+description = "A no_std parser for Floreum messages."
+repository = "https://github.com/tanika-mellifont/floreum_parser"
+license = "MIT OR Apache-2.0"
+keywords = ["floreum", "parser", "message", "network", "osdev"]
+categories = ["api-bindings", "parsing", "filesystem", "no-std::no-alloc", "network-programming"]
 
 [dependencies]
 
 [features]
-
-default = ["alloc", "bind"]
-alloc = []
+default = []
 bind = []
