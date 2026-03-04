@@ -71,11 +71,11 @@ fn test_request_walk() {
         strings_buffer
             .iter_mut()
             .zip(
-                (strings.len() as u64)
+                TryInto::<u64>::try_into(strings.len()).unwrap()
                     .to_le_bytes()
                     .into_iter()
                     .chain(strings.iter().flat_map(|string| {
-                        (string.len() as u64)
+                        TryInto::<u64>::try_into(string.len()).unwrap()
                             .to_le_bytes()
                             .into_iter()
                             .chain(string.as_bytes().iter().copied())

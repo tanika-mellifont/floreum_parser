@@ -58,7 +58,7 @@ impl<C: AsRef<[u8]> + for<'a> From<&'a [u8]>> Names<C> {
     pub fn from_bytes(bytes: &mut &[u8]) -> Result<Self, FloreumError> {
         let original = *bytes;
         let mut cursor = original;
-        let count = read_u64(&mut cursor)? as usize;
+        let count = read_u64(&mut cursor)?.try_into().map_err(|_| FloreumError::LocalBitWidth)?;
         let mut byte_len = size_of::<u64>();
         for _ in 0..count {
             byte_len += size_of::<u64>() + read_str(&mut cursor)?.len();
