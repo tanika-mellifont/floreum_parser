@@ -1,13 +1,13 @@
 use crate::{FloreumError, read_str, read_u64};
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Names<C: AsRef<[u8]>>(C, usize);
-pub struct NamesIter<'a, S: AsRef<[u8]>> {
+pub struct Iter<'a, S: AsRef<[u8]>> {
     names: &'a Names<S>,
     byte: usize,
     index: usize,
     count: usize,
 }
-impl<'a, C: AsRef<[u8]>> Iterator for NamesIter<'a, C> {
+impl<'a, C: AsRef<[u8]>> Iterator for Iter<'a, C> {
     type Item = Result<&'a str, FloreumError>;
     fn next(&mut self) -> Option<Self::Item> {
         if self.index < self.count {
@@ -42,8 +42,8 @@ impl<C: AsRef<[u8]>> Names<C> {
     pub fn bytes(&self) -> impl Iterator<Item = &u8> {
         self.0.as_ref().iter()
     }
-    pub fn iter<'a>(&'a self) -> NamesIter<'a, C> {
-        NamesIter {
+    pub fn iter<'a>(&'a self) -> Iter<'a, C> {
+        Iter {
             names: self,
             byte: 0,
             index: 0,

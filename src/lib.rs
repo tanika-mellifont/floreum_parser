@@ -7,6 +7,7 @@ mod request;
 mod response;
 pub use data::*;
 pub use error::*;
+pub use names::*;
 pub use message::*;
 pub use request::*;
 pub use response::*;
