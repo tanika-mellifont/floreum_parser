@@ -61,8 +61,7 @@ impl<C: AsRef<[u8]> + for<'a> From<&'a [u8]>> Names<C> {
         let count = read_u64(&mut cursor)? as usize;
         let mut byte_len = size_of::<u64>();
         for _ in 0..count {
-            let s = read_str(&mut cursor)?;
-            byte_len += size_of::<u64>() + s.len();
+            byte_len += size_of::<u64>() + read_str(&mut cursor)?.len();
         }
         if original.len() < byte_len {
             return Err(FloreumError::TruncatedContent { expected: byte_len as u64 });
