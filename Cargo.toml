@@ -1,6 +1,6 @@
 [package]
 name = "floreum_parser"
-version = "1.0.1"
+version = "1.0.2"
 authors = ["Tanika Mellifont-Young <tanika.young@proton.me>"]
 edition = "2024"
 description = "A no_std parser for Floreum messages."
