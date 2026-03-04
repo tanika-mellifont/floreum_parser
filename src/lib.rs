@@ -26,6 +26,7 @@ pub enum Message<N: AsRef<str>, C: AsRef<[u8]>> {
     RequestOverwrite(RequestOverwrite<C>),
     RequestSeek(RequestSeek),
     RequestTell(RequestTell),
+    #[cfg(feature = "bind")]
     RequestBind(RequestBind<N>),
     ResponseError(ResponseError),
     ResponseDrop(ResponseDrop),
@@ -42,5 +43,6 @@ pub enum Message<N: AsRef<str>, C: AsRef<[u8]>> {
     ResponseOverwrite(ResponseOverwrite),
     ResponseSeek(ResponseSeek),
     ResponseTell(ResponseTell),
+    #[cfg(feature = "bind")]
     ResponseBind(ResponseBind),
 }

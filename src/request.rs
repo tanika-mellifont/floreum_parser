@@ -1,8 +1,10 @@
 use crate::{
-    RequestBind, RequestDrop, RequestInsert, RequestJump, RequestList, RequestMake,
+    RequestDrop, RequestInsert, RequestJump, RequestList, RequestMake,
     RequestOverwrite, RequestPoint, RequestRead, RequestRemove, RequestRename, RequestSeek,
     RequestState, RequestTell, RequestTruncate, RequestWalk,
 };
+#[cfg(feature = "bind")]
+use crate::RequestBind;
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Request<N: AsRef<str>, C: AsRef<[u8]>> {
     Drop(RequestDrop),
@@ -20,6 +22,7 @@ pub enum Request<N: AsRef<str>, C: AsRef<[u8]>> {
     Truncate(RequestTruncate),
     Seek(RequestSeek),
     Tell(RequestTell),
+    #[cfg(feature = "bind")]
     Bind(RequestBind<N>),
 }
 impl<N: AsRef<str>, C: AsRef<[u8]>> From<RequestDrop> for Request<N, C> {
@@ -97,6 +100,7 @@ impl<N: AsRef<str>, C: AsRef<[u8]>> From<RequestTell> for Request<N, C> {
         Self::Tell(value)
     }
 }
+#[cfg(feature = "bind")]
 impl<N: AsRef<str>, C: AsRef<[u8]>> From<RequestBind<N>> for Request<N, C> {
     fn from(value: RequestBind<N>) -> Self {
         Self::Bind(value)

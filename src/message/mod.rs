@@ -1,3 +1,5 @@
+
+#[cfg(feature = "bind")]
 mod bind;
 mod drop;
 mod error;
@@ -15,6 +17,7 @@ mod state;
 mod tell;
 mod truncate;
 mod walk;
+#[cfg(feature = "bind")]
 pub use bind::*;
 pub use drop::*;
 pub use error::*;

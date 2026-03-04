@@ -1,8 +1,10 @@
 use crate::{
-    ResponseBind, ResponseDrop, ResponseError, ResponseInsert, ResponseJump, ResponseList,
+    ResponseDrop, ResponseError, ResponseInsert, ResponseJump, ResponseList,
     ResponseMake, ResponseOverwrite, ResponsePoint, ResponseRead, ResponseRemove, ResponseRename,
     ResponseSeek, ResponseState, ResponseTell, ResponseTruncate, ResponseWalk,
 };
+#[cfg(feature = "bind")]
+use crate::ResponseBind;
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Response<C: AsRef<[u8]>> {
     Error(ResponseError),
@@ -21,6 +23,7 @@ pub enum Response<C: AsRef<[u8]>> {
     Truncate(ResponseTruncate),
     Seek(ResponseSeek),
     Tell(ResponseTell),
+    #[cfg(feature = "bind")]
     Bind(ResponseBind),
 }
 impl<C: AsRef<[u8]>> From<ResponseDrop> for Response<C> {
@@ -98,6 +101,7 @@ impl<C: AsRef<[u8]>> From<ResponseTell> for Response<C> {
         Self::Tell(value)
     }
 }
+#[cfg(feature = "bind")]
 impl<C: AsRef<[u8]>> From<ResponseBind> for Response<C> {
     fn from(value: ResponseBind) -> Self {
         Self::Bind(value)

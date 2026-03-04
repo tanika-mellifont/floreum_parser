@@ -52,6 +52,7 @@ impl ResponseBind {
         Self {}
     }
 }
+#[cfg(feature = "bind")]
 #[test]
 fn test_request_bind() {
     let before = RequestBind::new(
