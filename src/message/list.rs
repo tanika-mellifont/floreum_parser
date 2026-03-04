@@ -1,16 +1,14 @@
-use crate::{FloreumError, Order, names::Names, read_order, read_u64};
+use crate::{FloreumError, names::Names, read_u64};
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RequestList {
     pub descriptor: u64,
-    pub cursor: Order,
     pub count: u64,
 }
 impl RequestList {
     pub const KIND_TAG: u64 = 40;
-    pub fn new(descriptor: u64, cursor: Order, count: u64) -> Self {
+    pub fn new(descriptor: u64, count: u64) -> Self {
         Self {
             descriptor,
-            cursor,
             count,
         }
     }
@@ -18,14 +16,12 @@ impl RequestList {
         self.descriptor
             .to_le_bytes()
             .into_iter()
-            .chain(self.cursor.to_iter())
             .chain(self.count.to_le_bytes().into_iter())
     }
     pub fn from_bytes(mut bytes: &[u8]) -> Result<Self, FloreumError> {
         let descriptor = read_u64(&mut bytes)?;
-        let cursor = read_order(&mut bytes)?;
         let count = read_u64(&mut bytes)?;
-        Ok(Self::new(descriptor, cursor, count))
+        Ok(Self::new(descriptor, count))
     }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -49,7 +45,7 @@ impl<C: AsRef<[u8]> + for<'a> From<&'a [u8]>> ResponseList<C> {
 }
 #[test]
 fn test_request_list() {
-    let before = RequestList::new(12345, Order::Before, 67890);
+    let before = RequestList::new(12345, 67890);
     let mut buffer = [0; 1024];
     for (to, from) in buffer.iter_mut().zip(before.to_iter()) {
         *to = from;
