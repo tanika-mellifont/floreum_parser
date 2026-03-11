@@ -33,9 +33,9 @@ cursor.
 
 ### Link
 
-This is locked behind the `link` feature, and is not supported by most `device`s (designed exclusively
-for the Floreum system). `Link`s allow referencing one location in a filesystem from a different
-path, transparent to both the device and the client. These links may be placed `above` the
+This is locked behind the `link` feature, and is not supported by most `device`s (designed
+exclusively for the Floreum system). `Link`s allow referencing one location in a filesystem from a
+different path, transparent to both the device and the client. These links may be placed `above` the
 destination, overriding all of the device's files, the links `below` the device, and any previous
 `above` links, or placed `below` the destination, not overriding any of the device's files, any
 `above` links, or previous `below` links (this will however override future `below` links). Links
@@ -102,16 +102,16 @@ Controls the behaviour for writes to a descriptor. Can be either of:
 - `Append` (writes append content to the end of the file), or
 - `Overwrite` (writes replace the next bytes after the cursor, extending the file if necessary).
 Note that `Append`ing does not set the cursor to the end of the file, meaning `read`s will still
-return bytes.
+return bytes with a cursor as usual.
 
 ### Permit
 
 A particular descriptor's permissions for a particular file. Setting these permissions via the
-Permit message at least temporarily changes the file's permissions for this descriptor, but whether
-this is permanent, visible to other descriptors, visible ten minutes from now, or even visible
-immediately, depends on how the device interprets the request. A disk format device, which stores
-its files permanently, might consider a "read-only" more permanent than a TCP socket device, which
-will close and forget all of its state when the device's host machine shuts down.
+`Permit` message at least temporarily changes the file's permissions for this descriptor, but
+whether this is permanent, visible to other descriptors, visible ten minutes from now, or even
+visible immediately, depends on how the device interprets the request. A disk format device, which
+stores its files permanently, might consider a "read-only" more permanent than a TCP socket device,
+which will close and forget all of its state when the device's host machine shuts down.
 
 ### Timestamp
 
@@ -187,7 +187,21 @@ and is opened to expect a directory. Moves `descriptor`'s cursor forward.
 Add a child of type `file_type` to `descriptor` with permissions `permit`, named `name`. Requires
 `append` permissions from `descriptor`, and that it is opened to expect a directory.
 
-### Remove(descriptor: u64, name: N) -> 
+### Remove(descriptor: u64, name: N) -> ()
+
+### Read
+
+### Write
+
+### Seek
+
+### Tell
+
+### Copy
+
+### Link
+
+### Drop
 
 ## AI Policy
 
