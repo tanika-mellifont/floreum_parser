@@ -7,7 +7,6 @@ pub use postcard::Error;
 use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Message<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> {
-    RequestIdentify(RequestIdentify<N>),
     RequestOpen(RequestOpen<N>),
     RequestClose(RequestClose),
     RequestMetadata(RequestMetadata),
@@ -23,7 +22,6 @@ pub enum Message<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> {
     RequestLink(RequestLink<N>),
     RequestDrop(RequestDrop),
     ResponseError(ResponseError),
-    ResponseIdentify(ResponseIdentify),
     ResponseOpen(ResponseOpen),
     ResponseClose(ResponseClose),
     ResponseMetadata(ResponseMetadata),
@@ -75,7 +73,6 @@ impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> Message<N, C, E> {
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Request<N: AsRef<str>, C: AsRef<[u8]>> {
-    Identify(RequestIdentify<N>),
     Open(RequestOpen<N>),
     Close(RequestClose),
     Metadata(RequestMetadata),
@@ -94,7 +91,6 @@ pub enum Request<N: AsRef<str>, C: AsRef<[u8]>> {
 impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> From<Request<N, C>> for Message<N, C, E> {
     fn from(value: Request<N, C>) -> Self {
         match value {
-            Request::Identify(identify) => Self::RequestIdentify(identify),
             Request::Open(open) => Self::RequestOpen(open),
             Request::Close(close) => Self::RequestClose(close),
             Request::Metadata(metadata) => Self::RequestMetadata(metadata),
@@ -118,7 +114,6 @@ impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> TryFrom<Message<N, C, 
     type Error = Message<N, C, E>;
     fn try_from(value: Message<N, C, E>) -> Result<Self, Self::Error> {
         Ok(match value {
-            Message::RequestIdentify(identify) => Self::Identify(identify),
             Message::RequestOpen(open) => Self::Open(open),
             Message::RequestClose(close) => Self::Close(close),
             Message::RequestMetadata(metadata) => Self::Metadata(metadata),
@@ -155,7 +150,6 @@ macro_rules! request {
         }
     };
 }
-request!(Identify, RequestIdentify<N>);
 request!(Open, RequestOpen<N>);
 request!(Close, RequestClose);
 request!(Metadata, RequestMetadata);
@@ -173,7 +167,6 @@ request!(Drop, RequestDrop);
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Response<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> {
     Error(ResponseError),
-    Identify(ResponseIdentify),
     Open(ResponseOpen),
     Close(ResponseClose),
     Metadata(ResponseMetadata),
@@ -193,7 +186,6 @@ impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> From<Response<N, C, E>
     fn from(value: Response<N, C, E>) -> Self {
         match value {
             Response::Error(error) => Self::ResponseError(error),
-            Response::Identify(identify) => Self::ResponseIdentify(identify),
             Response::Open(open) => Self::ResponseOpen(open),
             Response::Close(close) => Self::ResponseClose(close),
             Response::Metadata(metadata) => Self::ResponseMetadata(metadata),
@@ -220,7 +212,6 @@ impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> TryFrom<Message<N, C, 
     ) -> Result<Self, <Response<N, C, E> as TryFrom<Message<N, C, E>>>::Error> {
         Ok(match value {
             Message::ResponseError(error) => Self::Error(error),
-            Message::ResponseIdentify(identify) => Self::Identify(identify),
             Message::ResponseOpen(open) => Self::Open(open),
             Message::ResponseClose(close) => Self::Close(close),
             Message::ResponseMetadata(metadata) => Self::Metadata(metadata),
@@ -262,7 +253,6 @@ macro_rules! response {
     };
 }
 response!(Error, ResponseError, ResponseError);
-response!(Identify, ResponseIdentify, ResponseIdentify);
 response!(Open, ResponseOpen, ResponseOpen);
 response!(Close, ResponseClose, ResponseClose);
 response!(Metadata, ResponseMetadata, ResponseMetadata);

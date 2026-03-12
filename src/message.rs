@@ -4,14 +4,6 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ResponseError {}
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct RequestIdentify<N: AsRef<str>> {
-    pub path: N,
-}
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct ResponseIdentify {
-    pub file_type: FileType,
-}
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct RequestOpen<N: AsRef<str>> {
     pub expect: FileType,
     pub read: bool,
