@@ -46,7 +46,8 @@ pub struct Timestamp {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Metadata {
     pub permit: Permit,
-    pub is_file: Option<u64>,
+    pub file_type: FileType,
+    pub length: u64,
     pub accessed: Option<Timestamp>,
     pub modified: Option<Timestamp>,
     pub created: Option<Timestamp>,
