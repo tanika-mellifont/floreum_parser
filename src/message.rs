@@ -4,12 +4,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ResponseError {}
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct RequestExists<N: AsRef<str>> {
+pub struct RequestIdentify<N: AsRef<str>> {
     pub path: N,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct ResponseExists {
-    pub exists: bool,
+pub struct ResponseIdentify {
+    pub file_type: FileType,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct RequestOpen<N: AsRef<str>> {
@@ -37,12 +37,12 @@ pub struct ResponseMetadata {
     pub metadata: Metadata,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct RequestRemeta {
+pub struct RequestSetmeta {
     pub descriptor: u64,
     pub metadata: Metadata,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct ResponseRemeta {}
+pub struct ResponseSetmeta {}
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct RequestList {
     pub descriptor: u64,
@@ -113,7 +113,6 @@ pub struct RequestCopy {
 pub struct ResponseCopy {
     pub length: u64,
 }
-#[cfg(feature = "link")]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct RequestLink<N: AsRef<str>> {
     pub permit: Permit,
@@ -121,13 +120,10 @@ pub struct RequestLink<N: AsRef<str>> {
     pub from: N,
     pub to: N,
 }
-#[cfg(feature = "link")]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ResponseLink {}
-#[cfg(feature = "drop")]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct RequestDrop {}
-#[cfg(feature = "drop")]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ResponseDrop {}
 macro_rules! serde_base {
@@ -209,16 +205,16 @@ macro_rules! serde_content {
     };
 }
 serde_base!(ResponseError);
-serde_name!(RequestExists);
-serde_base!(ResponseExists);
+serde_name!(RequestIdentify);
+serde_base!(ResponseIdentify);
 serde_name!(RequestOpen);
 serde_base!(ResponseOpen);
 serde_base!(RequestClose);
 serde_base!(ResponseClose);
 serde_base!(RequestMetadata);
 serde_base!(ResponseMetadata);
-serde_base!(RequestRemeta);
-serde_base!(ResponseRemeta);
+serde_base!(RequestSetmeta);
+serde_base!(ResponseSetmeta);
 serde_base!(RequestList);
 serde_name!(RequestMake);
 serde_base!(ResponseMake);
@@ -234,13 +230,9 @@ serde_base!(RequestTell);
 serde_base!(ResponseTell);
 serde_base!(RequestCopy);
 serde_base!(ResponseCopy);
-#[cfg(feature = "link")]
 serde_name!(RequestLink);
-#[cfg(feature = "link")]
 serde_base!(ResponseLink);
-#[cfg(feature = "drop")]
 serde_base!(RequestDrop);
-#[cfg(feature = "drop")]
 serde_base!(ResponseDrop);
 impl<N: AsRef<str>, E: AsRef<[Entry<N>]>> ResponseList<N, E> {
     pub fn to_slice<'ser>(&self, buf: &'ser mut [u8]) -> Result<&'ser mut [u8], postcard::Error>

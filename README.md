@@ -67,6 +67,7 @@ This vulnerability exists anywhere that involves checking something and separate
 assuming check still holds. Neither the client machine, the protocol, the device, or the device's
 machine can be assumed to ensure that two consecutive operations are not separated by something else
 between.
+
 ## Structures
 
 ### FileType
@@ -153,10 +154,10 @@ An entry in a directory. Stores a name, and associated Metadata.
 There are multiple types of messages, classed into requests and responses, such that a device will
 response to a RequestX with a ResponseX, or a ResponseError.
 
-### Exists(path: String) -> bool
+### Identify(descriptor: path: String) -> FileType
 
-Find whether a file exists at `path`. Requires `read` permissions from all of the intermediate
-directories.
+Check what type of file exists at `path`. Requires `read` permissions from every intermediate
+directory.
 
 ### Open(expect: FileType, read: bool, write: Option<(Write, Create)>, path: String) -> descriptor
 
@@ -169,7 +170,7 @@ readable, and if `write` is Some, the `Write` will determine the behaviour of wr
 Close `descriptor`. The actual number may or may not later be reassigned to a different descriptor.
 Does not require any particular permissions from `descriptor`.
 
-### Metadata(descriptor: u64) -> Metadata
+### Metadata(descriptor: u64) -> metadata: Metadata
 
 Get the metadata for a file. Does not require any particular permissions from `descriptor`.
 
@@ -177,10 +178,10 @@ Get the metadata for a file. Does not require any particular permissions from `d
 
 Change the permissions for a file. Requires `permit` permissions from `descriptor`.
 
-### List(descriptor: u64, length: u64) -> \[Entry\]
+### List(descriptor: u64, length: u64) -> entries: \[Entry\]
 
-Read `length` directory entries from `descriptor`. Requires that `descriptor` holds read permissions,
-and is opened to expect a directory. Moves `descriptor`'s cursor forward.
+Read `length` directory entries from `descriptor`. Requires that `descriptor` holds read
+permissions, and is opened to expect a directory. Moves `descriptor`'s cursor forward.
 
 ### Make(descriptor: u64, file_type: FileType, permit: Permit, name: String) -> ()
 
@@ -189,19 +190,48 @@ Add a child of type `file_type` to `descriptor` with permissions `permit`, named
 
 ### Remove(descriptor: u64, name: N) -> ()
 
-### Read
+Remove a file such that `descriptor` no longer has a child named `name`. Will invalidate any `Link`s
+to that name, or if `name` refers to a link, will remove that link while leaving the source file
+present. Requires `write` and `resize` permissions from `descriptor`.
 
-### Write
+### Read(descriptor: u64, length: u64) -> content: \[u8\]
 
-### Seek
+Read up to `length` bytes from `descriptor`. May require multiple calls if the first call does not
+return `length` bytes, but this may also indicate that no data is left to read. Requires `read`
+permissions from `descriptor`.
 
-### Tell
+### Write(descriptor: u64, content: \[u8\]) -> length: u64
 
-### Copy
+Write `content` to `descriptor`, returning the length of bytes that were actually written. May
+require multiple calls if the first call does not write all of `content`, but this may also indicate
+that the device cannot accept any more data.
 
-### Link
+### Seek(descriptor: u64, cursor: Cursor, offset: u64) -> ()
 
-### Drop
+Move `descriptor`'s cursor by `offset` to a position relative to `cursor` (that is; forwards from
+the current position, backwards, offset from the start, or from the end). This offset is in terms of
+bytes, for files, or `Entry`-ies, for directories.
+
+### Tell(descriptor: u64) -> offset: u64
+
+Get the offset of `descriptor`'s cursor relative to the start of the file. This offset is in terms
+of bytes, for files, or `Entry`-ies, for directories.
+
+### Copy(from: u64, to: u64, length: u64) -> length: u64
+
+Copy `length` bytes from `from` to `to`, returning the actual length of bytes written.
+
+### Link(permit: Permit, above: bool, from: path, to: path) -> ()
+
+Exclusive to Floreum systems. Make any file available at `from` now also available at `to`, but only
+with the permissions allowed by `permit`. This simply refers to the name, not the actual file, and
+so may be unwittingly broken and/or fixed.
+
+### Drop() -> ()
+
+Exclusive to Floreum systems. Request the device to prepare to shut down. Floreum systems do not
+permit cyclic dependencies, so for a standard device this simply means resolving all outstanding
+requests and releasing external (hardware / network) state.
 
 ## AI Policy
 
