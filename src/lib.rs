@@ -189,7 +189,9 @@ pub enum Response<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> {
     Link(ResponseLink),
     Drop(ResponseDrop),
 }
-impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> From<Response<N, C, E>> for Message<N, C, E> {
+impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> From<Response<N, C, E>>
+    for Message<N, C, E>
+{
     fn from(value: Response<N, C, E>) -> Self {
         match value {
             Response::Error(error) => Self::ResponseError(error),
