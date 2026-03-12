@@ -1,4 +1,4 @@
-use crate::{Create, Cursor, Entry, FileType, Metadata, Permit, Write};
+use crate::{Cursor, Entry, FileType, Metadata, OpenOptions, Permit};
 use core::marker::PhantomData;
 use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -14,8 +14,7 @@ pub struct ResponseIdentify {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct RequestOpen<N: AsRef<str>> {
     pub expect: FileType,
-    pub read: bool,
-    pub write: Option<(Write, Create)>,
+    pub options: OpenOptions,
     pub path: N,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]

@@ -12,15 +12,13 @@ pub enum Cursor {
     End,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum Create {
-    Existing { truncate: bool },
-    New { permit: Permit },
-    Any { permit: Permit, truncate: bool },
-}
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum Write {
-    Append,
-    Overwrite,
+pub struct OpenOptions {
+    pub read: bool,
+    pub write: bool,
+    pub append: bool,
+    pub truncate: bool,
+    pub create: bool,
+    pub create_new: bool,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 pub struct Permit {
