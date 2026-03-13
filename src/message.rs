@@ -55,6 +55,7 @@ pub struct ResponseList<N: AsRef<str>, E: AsRef<[Entry<N>]>> {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct RequestRemove<N: AsRef<str>> {
     pub descriptor: u64,
+    pub expect: FileType,
     pub name: N,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
