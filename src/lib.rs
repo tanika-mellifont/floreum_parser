@@ -1,21 +1,23 @@
 #![no_std]
+extern crate alloc;
 mod error;
 mod message;
 mod metadata;
 pub use error::*;
 pub use message::*;
 pub use metadata::*;
+use alloc::vec::Vec;
 use postcard::experimental::serialized_size;
 use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Message<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> {
     RequestIdentify(RequestIdentify<N>),
     RequestOpen(RequestOpen<N>),
+    RequestFlush(RequestFlush),
     RequestClose(RequestClose),
     RequestMetadata(RequestMetadata),
     RequestSetmeta(RequestSetmeta),
     RequestList(RequestList),
-    RequestMake(RequestMake<N>),
     RequestRemove(RequestRemove<N>),
     RequestRead(RequestRead),
     RequestWrite(RequestWrite<C>),
@@ -27,11 +29,11 @@ pub enum Message<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> {
     ResponseError(ResponseError),
     ResponseIdentify(ResponseIdentify),
     ResponseOpen(ResponseOpen),
+    ResponseFlush(ResponseFlush),
     ResponseClose(ResponseClose),
     ResponseMetadata(ResponseMetadata),
     ResponseSetmeta(ResponseSetmeta),
     ResponseList(ResponseList<N, E>),
-    ResponseMake(ResponseMake),
     ResponseRemove(ResponseRemove),
     ResponseRead(ResponseRead<C>),
     ResponseWrite(ResponseWrite),
@@ -42,29 +44,13 @@ pub enum Message<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> {
     ResponseDrop(ResponseDrop),
 }
 impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> Message<N, C, E> {
-    pub fn serialized_size(&self) -> Result<usize, FloreumError>
+    pub fn length(&self) -> Result<usize, FloreumError>
     where
         N: Serialize,
         C: Serialize,
         E: Serialize,
     {
-        serialized_size(self).map_err(|_| FloreumError::InvalidData)
-    }
-    pub fn to_slice<'ser>(&self, buf: &'ser mut [u8]) -> Result<&'ser mut [u8], FloreumError>
-    where
-        N: Serialize,
-        C: Serialize,
-        E: Serialize,
-    {
-        postcard::to_slice(self, buf).map_err(|_| FloreumError::InvalidData)
-    }
-    pub fn to_extend<W: Extend<u8>>(&self, writer: W) -> Result<W, FloreumError>
-    where
-        N: Serialize,
-        C: Serialize,
-        E: Serialize,
-    {
-        postcard::to_extend(self, writer).map_err(|_| FloreumError::InvalidData)
+        serialized_size(self).map_err(|err| err.into())
     }
     pub fn from_bytes<'de>(s: &'de [u8]) -> Result<Self, FloreumError>
     where
@@ -72,7 +58,7 @@ impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> Message<N, C, E> {
         C: Deserialize<'de>,
         E: Deserialize<'de>,
     {
-        postcard::from_bytes(s).map_err(|_| FloreumError::InvalidData)
+        postcard::from_bytes(s).map_err(|err| err.into())
     }
     pub fn take_from_bytes<'de>(s: &'de [u8]) -> Result<(Self, &'de [u8]), FloreumError>
     where
@@ -80,18 +66,42 @@ impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> Message<N, C, E> {
         C: Deserialize<'de>,
         E: Deserialize<'de>,
     {
-        postcard::take_from_bytes(s).map_err(|_| FloreumError::InvalidData)
+        postcard::take_from_bytes(s).map_err(|err| err.into())
+    }
+    pub fn to_allocvec(&self) -> Result<Vec<u8>, FloreumError>
+    where
+        N: Serialize,
+        C: Serialize,
+        E: Serialize,
+    {
+        postcard::to_allocvec(self).map_err(|err| err.into())
+    }
+    pub fn to_extend<W: Extend<u8>>(&self, writer: W) -> Result<W, FloreumError>
+    where
+        N: Serialize,
+        C: Serialize,
+        E: Serialize,
+    {
+        postcard::to_extend(self, writer).map_err(|err| err.into())
+    }
+    pub fn to_slice<'ser>(&self, buf: &'ser mut [u8]) -> Result<&'ser mut [u8], FloreumError>
+    where
+        N: Serialize,
+        C: Serialize,
+        E: Serialize,
+    {
+        postcard::to_slice(self, buf).map_err(|err| err.into())
     }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Request<N: AsRef<str>, C: AsRef<[u8]>> {
     Identify(RequestIdentify<N>),
     Open(RequestOpen<N>),
+    Flush(RequestFlush),
     Close(RequestClose),
     Metadata(RequestMetadata),
     Setmeta(RequestSetmeta),
     List(RequestList),
-    Make(RequestMake<N>),
     Remove(RequestRemove<N>),
     Read(RequestRead),
     Write(RequestWrite<C>),
@@ -106,11 +116,11 @@ impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> From<Request<N, C>> fo
         match value {
             Request::Identify(identify) => Self::RequestIdentify(identify),
             Request::Open(open) => Self::RequestOpen(open),
+            Request::Flush(flush) => Self::RequestFlush(flush),
             Request::Close(close) => Self::RequestClose(close),
             Request::Metadata(metadata) => Self::RequestMetadata(metadata),
             Request::Setmeta(setmeta) => Self::RequestSetmeta(setmeta),
             Request::List(list) => Self::RequestList(list),
-            Request::Make(make) => Self::RequestMake(make),
             Request::Remove(remove) => Self::RequestRemove(remove),
             Request::Read(read) => Self::RequestRead(read),
             Request::Write(write) => Self::RequestWrite(write),
@@ -130,11 +140,11 @@ impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> TryFrom<Message<N, C, 
         Ok(match value {
             Message::RequestIdentify(identify) => Self::Identify(identify),
             Message::RequestOpen(open) => Self::Open(open),
+            Message::RequestFlush(flush) => Self::Flush(flush),
             Message::RequestClose(close) => Self::Close(close),
             Message::RequestMetadata(metadata) => Self::Metadata(metadata),
             Message::RequestSetmeta(setmeta) => Self::Setmeta(setmeta),
             Message::RequestList(list) => Self::List(list),
-            Message::RequestMake(make) => Self::Make(make),
             Message::RequestRemove(remove) => Self::Remove(remove),
             Message::RequestRead(read) => Self::Read(read),
             Message::RequestWrite(write) => Self::Write(write),
@@ -148,48 +158,52 @@ impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> TryFrom<Message<N, C, 
     }
 }
 macro_rules! request {
-    ($variant:ident, $request:ty) => {
-        impl<N: AsRef<str>, C: AsRef<[u8]>> From<$request> for Request<N, C> {
+    ($request_variant:ident, $message_variant:ident, $request:ty) => {
+        impl<N: AsRef<str>, C: AsRef<[u8]>> From<$request>
+            for Request<N, C>
+        {
             fn from(value: $request) -> Self {
-                Self::$variant(value)
+                Self::$request_variant(value)
             }
         }
-        impl<N: AsRef<str>, C: AsRef<[u8]>> TryFrom<Request<N, C>> for $request {
-            type Error = Request<N, C>;
-            fn try_from(value: Request<N, C>) -> Result<Self, Self::Error> {
+        impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> TryFrom<Message<N, C, E>>
+            for $request
+        {
+            type Error = Message<N, C, E>;
+            fn try_from(value: Message<N, C, E>) -> Result<Self, Self::Error> {
                 match value {
-                    Request::$variant(as_self) => Ok(as_self),
+                    Message::$message_variant(as_self) => Ok(as_self),
                     other => Err(other),
                 }
             }
         }
     };
 }
-request!(Identify, RequestIdentify<N>);
-request!(Open, RequestOpen<N>);
-request!(Close, RequestClose);
-request!(Metadata, RequestMetadata);
-request!(Setmeta, RequestSetmeta);
-request!(List, RequestList);
-request!(Make, RequestMake<N>);
-request!(Remove, RequestRemove<N>);
-request!(Read, RequestRead);
-request!(Write, RequestWrite<C>);
-request!(Seek, RequestSeek);
-request!(Tell, RequestTell);
-request!(Copy, RequestCopy);
-request!(Link, RequestLink<N>);
-request!(Drop, RequestDrop);
+request!(Identify, RequestIdentify, RequestIdentify<N>);
+request!(Open, RequestOpen, RequestOpen<N>);
+request!(Flush, RequestFlush, RequestFlush);
+request!(Close, RequestClose, RequestClose);
+request!(Metadata, RequestMetadata, RequestMetadata);
+request!(Setmeta, RequestSetmeta, RequestSetmeta);
+request!(List, RequestList, RequestList);
+request!(Remove, RequestRemove, RequestRemove<N>);
+request!(Read, RequestRead, RequestRead);
+request!(Write, RequestWrite, RequestWrite<C>);
+request!(Seek, RequestSeek, RequestSeek);
+request!(Tell, RequestTell, RequestTell);
+request!(Copy, RequestCopy, RequestCopy);
+request!(Link, RequestLink, RequestLink<N>);
+request!(Drop, RequestDrop, RequestDrop);
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Response<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> {
     Error(ResponseError),
     Identify(ResponseIdentify),
     Open(ResponseOpen),
+    Flush(ResponseFlush),
     Close(ResponseClose),
     Metadata(ResponseMetadata),
     Setmeta(ResponseSetmeta),
     List(ResponseList<N, E>),
-    Make(ResponseMake),
     Remove(ResponseRemove),
     Read(ResponseRead<C>),
     Write(ResponseWrite),
@@ -207,11 +221,11 @@ impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> From<Response<N, C, E>
             Response::Error(error) => Self::ResponseError(error),
             Response::Identify(identify) => Self::ResponseIdentify(identify),
             Response::Open(open) => Self::ResponseOpen(open),
+            Response::Flush(flush) => Self::ResponseFlush(flush),
             Response::Close(close) => Self::ResponseClose(close),
             Response::Metadata(metadata) => Self::ResponseMetadata(metadata),
             Response::Setmeta(setmeta) => Self::ResponseSetmeta(setmeta),
             Response::List(list) => Self::ResponseList(list),
-            Response::Make(make) => Self::ResponseMake(make),
             Response::Remove(remove) => Self::ResponseRemove(remove),
             Response::Read(read) => Self::ResponseRead(read),
             Response::Write(write) => Self::ResponseWrite(write),
@@ -234,11 +248,11 @@ impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> TryFrom<Message<N, C, 
             Message::ResponseError(error) => Self::Error(error),
             Message::ResponseIdentify(identify) => Self::Identify(identify),
             Message::ResponseOpen(open) => Self::Open(open),
+            Message::ResponseFlush(flush) => Self::Flush(flush),
             Message::ResponseClose(close) => Self::Close(close),
             Message::ResponseMetadata(metadata) => Self::Metadata(metadata),
             Message::ResponseSetmeta(setmeta) => Self::Setmeta(setmeta),
             Message::ResponseList(list) => Self::List(list),
-            Message::ResponseMake(make) => Self::Make(make),
             Message::ResponseRemove(remove) => Self::Remove(remove),
             Message::ResponseRead(read) => Self::Read(read),
             Message::ResponseWrite(write) => Self::Write(write),
@@ -276,11 +290,11 @@ macro_rules! response {
 response!(Error, ResponseError, ResponseError);
 response!(Identify, ResponseIdentify, ResponseIdentify);
 response!(Open, ResponseOpen, ResponseOpen);
+response!(Flush, ResponseFlush, ResponseFlush);
 response!(Close, ResponseClose, ResponseClose);
 response!(Metadata, ResponseMetadata, ResponseMetadata);
 response!(Setmeta, ResponseSetmeta, ResponseSetmeta);
 response!(List, ResponseList, ResponseList<N, E>);
-response!(Make, ResponseMake, ResponseMake);
 response!(Remove, ResponseRemove, ResponseRemove);
 response!(Read, ResponseRead, ResponseRead<C>);
 response!(Write, ResponseWrite, ResponseWrite);

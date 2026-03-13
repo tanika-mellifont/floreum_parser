@@ -24,6 +24,12 @@ pub struct ResponseOpen {
     pub descriptor: u64,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct RequestFlush {
+    pub descriptor: u64,
+}
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct ResponseFlush {}
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct RequestClose {
     pub descriptor: u64,
 }
@@ -54,15 +60,6 @@ pub struct ResponseList<N: AsRef<str>, E: AsRef<[Entry<N>]>> {
     pub entries: E,
     pub _phantom_n: PhantomData<N>,
 }
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct RequestMake<N: AsRef<str>> {
-    pub descriptor: u64,
-    pub file_type: FileType,
-    pub permit: Permit,
-    pub name: N,
-}
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct ResponseMake {}
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct RequestRemove<N: AsRef<str>> {
     pub descriptor: u64,
