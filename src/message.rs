@@ -3,7 +3,7 @@ use core::marker::PhantomData;
 use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ResponseError {
-    error: FloreumError,
+    pub error: FloreumError,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct RequestIdentify<N: AsRef<str>> {

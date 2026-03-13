@@ -1,5 +1,4 @@
 use core::{error::Error, fmt::Display};
-
 use serde::{Deserialize, Serialize};
 #[repr(u64)]
 #[non_exhaustive]
