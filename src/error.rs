@@ -1,3 +1,5 @@
+use core::{error::Error, fmt::Display};
+
 use serde::{Deserialize, Serialize};
 #[repr(u64)]
 #[non_exhaustive]
@@ -44,4 +46,11 @@ pub enum FloreumError {
     UnexpectedEof = 38,
     OutOfMemory = 39,
     InProgress = 40,
+}
+impl Display for FloreumError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+impl Error for FloreumError {
 }
