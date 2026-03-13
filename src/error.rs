@@ -6,13 +6,14 @@ use serde::{Deserialize, Serialize};
 pub enum FloreumError {
     Other,
     ProtocolViolation,
-    InvalidUtf8,
+    InvalidName,
     HostUsize,
     ServerUsize,
     Deadlock,
     OutOfMemory,
     Unsupported,
     InvalidDescriptor,
+    PermissionDenied,
     DoesExist,
     DoesNotExist,
     NotAFile,
@@ -31,7 +32,7 @@ impl Error for FloreumError {}
 impl From<postcard::Error> for FloreumError {
     fn from(value: postcard::Error) -> Self {
         match value {
-            postcard::Error::DeserializeBadUtf8 => Self::InvalidUtf8,
+            postcard::Error::DeserializeBadUtf8 => Self::InvalidName,
             _ => Self::ProtocolViolation,
         }
     }
