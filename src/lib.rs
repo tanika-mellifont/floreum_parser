@@ -48,8 +48,7 @@ impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> Message<N, C, E> {
         C: Serialize,
         E: Serialize,
     {
-        serialized_size(self)
-            .map_err(|_| FloreumError::InvalidData)
+        serialized_size(self).map_err(|_| FloreumError::InvalidData)
     }
     pub fn to_slice<'ser>(&self, buf: &'ser mut [u8]) -> Result<&'ser mut [u8], FloreumError>
     where
