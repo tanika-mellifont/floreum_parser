@@ -5,11 +5,10 @@ pub enum FileType {
     Dir,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum Cursor {
-    Forward,
-    Backward,
-    Start,
-    End,
+pub enum SeekFrom {
+    Start(u64),
+    End(i64),
+    Current(i64),
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct OpenOptions {

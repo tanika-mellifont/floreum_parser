@@ -1,4 +1,4 @@
-use crate::{Cursor, Entry, FileType, Metadata, OpenOptions, Permit, error::FloreumError};
+use crate::{SeekFrom, Entry, FileType, Metadata, OpenOptions, Permit, error::FloreumError};
 use core::marker::PhantomData;
 use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -82,8 +82,7 @@ pub struct ResponseWrite {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct RequestSeek {
     pub descriptor: u64,
-    pub cursor: Cursor,
-    pub offset: u64,
+    pub from: SeekFrom,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ResponseSeek {}
