@@ -25,16 +25,10 @@ pub struct Permit {
     pub read: bool,
     pub write: bool,
     pub append: bool,
-    pub resize: bool,
     pub permit: bool,
-    pub read_accessed: bool,
-    pub read_modified: bool,
-    pub read_created: bool,
-    pub write_accessed: bool,
-    pub write_modified: bool,
-    pub write_created: bool,
-    pub link_before: bool,
-    pub link_after: bool,
+    pub read_times: bool,
+    pub write_times: bool,
+    pub link: bool,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Timestamp {

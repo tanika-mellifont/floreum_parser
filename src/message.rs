@@ -36,8 +36,8 @@ pub struct ResponseMetadata {
     pub metadata: Metadata,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct RequestSetmeta {
-    pub descriptor: u64,
+pub struct RequestSetmeta<N: AsRef<str>> {
+    pub path: N,
     pub metadata: Metadata,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -54,9 +54,8 @@ pub struct ResponseList<N: AsRef<str>, E: AsRef<[Entry<N>]>> {
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct RequestRemove<N: AsRef<str>> {
-    pub descriptor: u64,
     pub expect: FileType,
-    pub name: N,
+    pub path: N,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ResponseRemove {}

@@ -15,7 +15,7 @@ pub enum Message<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> {
     RequestFlush(RequestFlush),
     RequestClose(RequestClose),
     RequestMetadata(RequestMetadata<N>),
-    RequestSetmeta(RequestSetmeta),
+    RequestSetmeta(RequestSetmeta<N>),
     RequestList(RequestList),
     RequestRemove(RequestRemove<N>),
     RequestRead(RequestRead),
@@ -97,7 +97,7 @@ pub enum Request<N: AsRef<str>, C: AsRef<[u8]>> {
     Flush(RequestFlush),
     Close(RequestClose),
     Metadata(RequestMetadata<N>),
-    Setmeta(RequestSetmeta),
+    Setmeta(RequestSetmeta<N>),
     List(RequestList),
     Remove(RequestRemove<N>),
     Read(RequestRead),
@@ -178,7 +178,7 @@ request!(Open, RequestOpen, RequestOpen<N>);
 request!(Flush, RequestFlush, RequestFlush);
 request!(Close, RequestClose, RequestClose);
 request!(Metadata, RequestMetadata, RequestMetadata<N>);
-request!(Setmeta, RequestSetmeta, RequestSetmeta);
+request!(Setmeta, RequestSetmeta, RequestSetmeta<N>);
 request!(List, RequestList, RequestList);
 request!(Remove, RequestRemove, RequestRemove<N>);
 request!(Read, RequestRead, RequestRead);
