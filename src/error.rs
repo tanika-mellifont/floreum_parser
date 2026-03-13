@@ -52,5 +52,4 @@ impl Display for FloreumError {
         write!(f, "{:?}", self)
     }
 }
-impl Error for FloreumError {
-}
+impl Error for FloreumError {}
