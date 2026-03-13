@@ -21,6 +21,7 @@ pub enum FloreumError {
     DirectoryNotEmpty,
     CannotExtend,
     BrokenLink,
+    InvalidTimestamp,
     DeviceRejected,
 }
 impl Display for FloreumError {
