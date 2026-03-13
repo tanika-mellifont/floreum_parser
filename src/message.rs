@@ -1,8 +1,10 @@
-use crate::{Cursor, Entry, FileType, Metadata, OpenOptions, Permit};
+use crate::{Cursor, Entry, FileType, Metadata, OpenOptions, Permit, error::FloreumError};
 use core::marker::PhantomData;
 use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct ResponseError {}
+pub struct ResponseError {
+    error: FloreumError,
+}
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct RequestIdentify<N: AsRef<str>> {
     pub path: N,

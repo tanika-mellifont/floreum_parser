@@ -1,4 +1,5 @@
 #![no_std]
+mod error;
 mod message;
 mod metadata;
 pub use message::*;
