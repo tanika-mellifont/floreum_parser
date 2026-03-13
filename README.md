@@ -86,24 +86,15 @@ cursor position or the start/end of the file. Can be set to:
 - `Start` (move to an absolute position relative to the start of the file), or
 - `End` (move relative to the end of the file, similar but opposite to `Start`).
 
-### Create
+### OpenOptions
 
-Controls the behaviour for when an operation to modify a file finds an existing one at the specified
-path. Can be set to:
-- `Existing` (open only if the file already exists),
-- `New` (open only if the file doesn't already exist), or
-- `Any` (open if it does exist, or create it if it doesn't).
-For `Existing` and `Any`, the client may also choose whether or not to `truncate` (erase) the
-existing content, or append to the end of it. If a new file must be created, it will use the
-provided `Permit`.
-
-### Write
-
-Controls the behaviour for writes to a descriptor. Can be either of:
-- `Append` (writes append content to the end of the file), or
-- `Overwrite` (writes replace the next bytes after the cursor, extending the file if necessary).
-Note that `Append`ing does not set the cursor to the end of the file, meaning `read`s will still
-return bytes with a cursor as usual.
+Controls how a file is opened. If `read`, bytes can be read from the file using a cursor. If
+`write`, bytes can be written to that same cursor. If `append`, `write` is ignored, and bytes can be
+written to the file, but will be redirected to the end (note that this does not affect reading. if
+`read` is set, bytes can be read from the cursor as normal.). If `truncate`, and the file already
+exists, its length will be truncated to zero as it is opened (this requires `resize` permissions).
+If `create_new` is set, `create` and `truncate` are ignored, and the operation will fail if the file
+already exists.
 
 ### Permit
 
@@ -159,11 +150,9 @@ response to a RequestX with a ResponseX, or a ResponseError.
 Check what type of file exists at `path`. Requires `read` permissions from every intermediate
 directory.
 
-### Open(expect: FileType, read: bool, write: Option<(Write, Create)>, path: String) -> descriptor
+### Open(expect: FileType, options: OpenOptions, path: String) -> descriptor
 
-Open a file, expected to be of type `expect`, accessible from `path`. if `read`, the file will be
-readable, and if `write` is Some, the `Write` will determine the behaviour of writing and the
-`Create` will determine what to do with an unexpectedly existing/nonexistant file.
+Open a file, expected to be of type `expect`, accessible from `path`, with options `options`.
 
 ### Close(descriptor: u64) -> ()
 
