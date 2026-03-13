@@ -2,9 +2,9 @@
 mod error;
 mod message;
 mod metadata;
+pub use error::*;
 pub use message::*;
 pub use metadata::*;
-pub use postcard::Error;
 use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Message<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> {
@@ -41,37 +41,37 @@ pub enum Message<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> {
     ResponseDrop(ResponseDrop),
 }
 impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> Message<N, C, E> {
-    pub fn to_slice<'ser>(&self, buf: &'ser mut [u8]) -> Result<&'ser mut [u8], postcard::Error>
+    pub fn to_slice<'ser>(&self, buf: &'ser mut [u8]) -> Result<&'ser mut [u8], FloreumError>
     where
         N: Serialize,
         C: Serialize,
         E: Serialize,
     {
-        postcard::to_slice(self, buf)
+        postcard::to_slice(self, buf).map_err(|_| FloreumError::InvalidData)
     }
-    pub fn to_extend<W: Extend<u8>>(&self, writer: W) -> Result<W, postcard::Error>
+    pub fn to_extend<W: Extend<u8>>(&self, writer: W) -> Result<W, FloreumError>
     where
         N: Serialize,
         C: Serialize,
         E: Serialize,
     {
-        postcard::to_extend(self, writer)
+        postcard::to_extend(self, writer).map_err(|_| FloreumError::InvalidData)
     }
-    pub fn from_bytes<'de>(s: &'de [u8]) -> Result<Self, postcard::Error>
+    pub fn from_bytes<'de>(s: &'de [u8]) -> Result<Self, FloreumError>
     where
         N: Deserialize<'de>,
         C: Deserialize<'de>,
         E: Deserialize<'de>,
     {
-        postcard::from_bytes(s)
+        postcard::from_bytes(s).map_err(|_| FloreumError::InvalidData)
     }
-    pub fn take_from_bytes<'de>(s: &'de [u8]) -> Result<(Self, &'de [u8]), postcard::Error>
+    pub fn take_from_bytes<'de>(s: &'de [u8]) -> Result<(Self, &'de [u8]), FloreumError>
     where
         N: Deserialize<'de>,
         C: Deserialize<'de>,
         E: Deserialize<'de>,
     {
-        postcard::take_from_bytes(s)
+        postcard::take_from_bytes(s).map_err(|_| FloreumError::InvalidData)
     }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
