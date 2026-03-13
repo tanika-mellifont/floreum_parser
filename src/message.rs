@@ -55,6 +55,7 @@ pub struct ResponseList<N: AsRef<str>, E: AsRef<[Entry<N>]>> {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct RequestRemove<N: AsRef<str>> {
     pub expect: FileType,
+    pub all: bool,
     pub path: N,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -67,6 +68,7 @@ pub struct RequestRead {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ResponseRead<C: AsRef<[u8]>> {
     pub content: C,
+    pub error: Option<FloreumError>,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct RequestWrite<C: AsRef<[u8]>> {
@@ -75,7 +77,7 @@ pub struct RequestWrite<C: AsRef<[u8]>> {
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ResponseWrite {
-    pub length: u64,
+    pub error: Option<(u64, FloreumError)>,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct RequestSeek {
@@ -94,10 +96,9 @@ pub struct ResponseTell {
     pub offset: u64,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct RequestCopy {
-    pub from: u64,
-    pub to: u64,
-    pub length: u64,
+pub struct RequestCopy<N: AsRef<str>> {
+    pub from: N,
+    pub to: N,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ResponseCopy {

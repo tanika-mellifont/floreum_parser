@@ -3,10 +3,10 @@ extern crate alloc;
 mod error;
 mod message;
 mod metadata;
+use alloc::vec::Vec;
 pub use error::*;
 pub use message::*;
 pub use metadata::*;
-use alloc::vec::Vec;
 use postcard::experimental::serialized_size;
 use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -22,7 +22,7 @@ pub enum Message<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> {
     RequestWrite(RequestWrite<C>),
     RequestSeek(RequestSeek),
     RequestTell(RequestTell),
-    RequestCopy(RequestCopy),
+    RequestCopy(RequestCopy<N>),
     RequestLink(RequestLink<N>),
     RequestDrop(RequestDrop),
     ResponseError(ResponseError),
@@ -104,7 +104,7 @@ pub enum Request<N: AsRef<str>, C: AsRef<[u8]>> {
     Write(RequestWrite<C>),
     Seek(RequestSeek),
     Tell(RequestTell),
-    Copy(RequestCopy),
+    Copy(RequestCopy<N>),
     Link(RequestLink<N>),
     Drop(RequestDrop),
 }
@@ -154,9 +154,7 @@ impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> TryFrom<Message<N, C, 
 }
 macro_rules! request {
     ($request_variant:ident, $message_variant:ident, $request:ty) => {
-        impl<N: AsRef<str>, C: AsRef<[u8]>> From<$request>
-            for Request<N, C>
-        {
+        impl<N: AsRef<str>, C: AsRef<[u8]>> From<$request> for Request<N, C> {
             fn from(value: $request) -> Self {
                 Self::$request_variant(value)
             }
@@ -185,7 +183,7 @@ request!(Read, RequestRead, RequestRead);
 request!(Write, RequestWrite, RequestWrite<C>);
 request!(Seek, RequestSeek, RequestSeek);
 request!(Tell, RequestTell, RequestTell);
-request!(Copy, RequestCopy, RequestCopy);
+request!(Copy, RequestCopy, RequestCopy<N>);
 request!(Link, RequestLink, RequestLink<N>);
 request!(Drop, RequestDrop, RequestDrop);
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
