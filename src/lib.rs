@@ -11,11 +11,10 @@ use postcard::experimental::serialized_size;
 use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Message<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> {
-    RequestIdentify(RequestIdentify<N>),
     RequestOpen(RequestOpen<N>),
     RequestFlush(RequestFlush),
     RequestClose(RequestClose),
-    RequestMetadata(RequestMetadata),
+    RequestMetadata(RequestMetadata<N>),
     RequestSetmeta(RequestSetmeta),
     RequestList(RequestList),
     RequestRemove(RequestRemove<N>),
@@ -27,7 +26,6 @@ pub enum Message<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> {
     RequestLink(RequestLink<N>),
     RequestDrop(RequestDrop),
     ResponseError(ResponseError),
-    ResponseIdentify(ResponseIdentify),
     ResponseOpen(ResponseOpen),
     ResponseFlush(ResponseFlush),
     ResponseClose(ResponseClose),
@@ -95,11 +93,10 @@ impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> Message<N, C, E> {
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Request<N: AsRef<str>, C: AsRef<[u8]>> {
-    Identify(RequestIdentify<N>),
     Open(RequestOpen<N>),
     Flush(RequestFlush),
     Close(RequestClose),
-    Metadata(RequestMetadata),
+    Metadata(RequestMetadata<N>),
     Setmeta(RequestSetmeta),
     List(RequestList),
     Remove(RequestRemove<N>),
@@ -114,7 +111,6 @@ pub enum Request<N: AsRef<str>, C: AsRef<[u8]>> {
 impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> From<Request<N, C>> for Message<N, C, E> {
     fn from(value: Request<N, C>) -> Self {
         match value {
-            Request::Identify(identify) => Self::RequestIdentify(identify),
             Request::Open(open) => Self::RequestOpen(open),
             Request::Flush(flush) => Self::RequestFlush(flush),
             Request::Close(close) => Self::RequestClose(close),
@@ -138,7 +134,6 @@ impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> TryFrom<Message<N, C, 
     type Error = Message<N, C, E>;
     fn try_from(value: Message<N, C, E>) -> Result<Self, Self::Error> {
         Ok(match value {
-            Message::RequestIdentify(identify) => Self::Identify(identify),
             Message::RequestOpen(open) => Self::Open(open),
             Message::RequestFlush(flush) => Self::Flush(flush),
             Message::RequestClose(close) => Self::Close(close),
@@ -179,11 +174,10 @@ macro_rules! request {
         }
     };
 }
-request!(Identify, RequestIdentify, RequestIdentify<N>);
 request!(Open, RequestOpen, RequestOpen<N>);
 request!(Flush, RequestFlush, RequestFlush);
 request!(Close, RequestClose, RequestClose);
-request!(Metadata, RequestMetadata, RequestMetadata);
+request!(Metadata, RequestMetadata, RequestMetadata<N>);
 request!(Setmeta, RequestSetmeta, RequestSetmeta);
 request!(List, RequestList, RequestList);
 request!(Remove, RequestRemove, RequestRemove<N>);
@@ -197,7 +191,6 @@ request!(Drop, RequestDrop, RequestDrop);
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Response<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> {
     Error(ResponseError),
-    Identify(ResponseIdentify),
     Open(ResponseOpen),
     Flush(ResponseFlush),
     Close(ResponseClose),
@@ -219,7 +212,6 @@ impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> From<Response<N, C, E>
     fn from(value: Response<N, C, E>) -> Self {
         match value {
             Response::Error(error) => Self::ResponseError(error),
-            Response::Identify(identify) => Self::ResponseIdentify(identify),
             Response::Open(open) => Self::ResponseOpen(open),
             Response::Flush(flush) => Self::ResponseFlush(flush),
             Response::Close(close) => Self::ResponseClose(close),
@@ -246,7 +238,6 @@ impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> TryFrom<Message<N, C, 
     ) -> Result<Self, <Response<N, C, E> as TryFrom<Message<N, C, E>>>::Error> {
         Ok(match value {
             Message::ResponseError(error) => Self::Error(error),
-            Message::ResponseIdentify(identify) => Self::Identify(identify),
             Message::ResponseOpen(open) => Self::Open(open),
             Message::ResponseFlush(flush) => Self::Flush(flush),
             Message::ResponseClose(close) => Self::Close(close),
@@ -288,7 +279,6 @@ macro_rules! response {
     };
 }
 response!(Error, ResponseError, ResponseError);
-response!(Identify, ResponseIdentify, ResponseIdentify);
 response!(Open, ResponseOpen, ResponseOpen);
 response!(Flush, ResponseFlush, ResponseFlush);
 response!(Close, ResponseClose, ResponseClose);

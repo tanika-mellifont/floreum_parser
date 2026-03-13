@@ -6,14 +6,6 @@ pub struct ResponseError {
     pub error: FloreumError,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct RequestIdentify<N: AsRef<str>> {
-    pub path: N,
-}
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct ResponseIdentify {
-    pub file_type: FileType,
-}
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct RequestOpen<N: AsRef<str>> {
     pub expect: FileType,
     pub options: OpenOptions,
@@ -36,8 +28,8 @@ pub struct RequestClose {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ResponseClose {}
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct RequestMetadata {
-    pub descriptor: u64,
+pub struct RequestMetadata<N: AsRef<str>> {
+    pub path: N,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ResponseMetadata {
