@@ -21,7 +21,6 @@ pub enum Message<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> {
     RequestRead(RequestRead),
     RequestWrite(RequestWrite<C>),
     RequestSeek(RequestSeek),
-    RequestTell(RequestTell),
     RequestCopy(RequestCopy<N>),
     RequestLink(RequestLink<N>),
     RequestDrop(RequestDrop),
@@ -36,7 +35,6 @@ pub enum Message<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> {
     ResponseRead(ResponseRead<C>),
     ResponseWrite(ResponseWrite),
     ResponseSeek(ResponseSeek),
-    ResponseTell(ResponseTell),
     ResponseCopy(ResponseCopy),
     ResponseLink(ResponseLink),
     ResponseDrop(ResponseDrop),
@@ -103,7 +101,6 @@ pub enum Request<N: AsRef<str>, C: AsRef<[u8]>> {
     Read(RequestRead),
     Write(RequestWrite<C>),
     Seek(RequestSeek),
-    Tell(RequestTell),
     Copy(RequestCopy<N>),
     Link(RequestLink<N>),
     Drop(RequestDrop),
@@ -121,7 +118,6 @@ impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> From<Request<N, C>> fo
             Request::Read(read) => Self::RequestRead(read),
             Request::Write(write) => Self::RequestWrite(write),
             Request::Seek(seek) => Self::RequestSeek(seek),
-            Request::Tell(tell) => Self::RequestTell(tell),
             Request::Copy(copy) => Self::RequestCopy(copy),
             Request::Link(link) => Self::RequestLink(link),
             Request::Drop(drop) => Self::RequestDrop(drop),
@@ -144,7 +140,6 @@ impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> TryFrom<Message<N, C, 
             Message::RequestRead(read) => Self::Read(read),
             Message::RequestWrite(write) => Self::Write(write),
             Message::RequestSeek(seek) => Self::Seek(seek),
-            Message::RequestTell(tell) => Self::Tell(tell),
             Message::RequestCopy(copy) => Self::Copy(copy),
             Message::RequestLink(link) => Self::Link(link),
             Message::RequestDrop(drop) => Self::Drop(drop),
@@ -182,7 +177,6 @@ request!(Remove, RequestRemove, RequestRemove<N>);
 request!(Read, RequestRead, RequestRead);
 request!(Write, RequestWrite, RequestWrite<C>);
 request!(Seek, RequestSeek, RequestSeek);
-request!(Tell, RequestTell, RequestTell);
 request!(Copy, RequestCopy, RequestCopy<N>);
 request!(Link, RequestLink, RequestLink<N>);
 request!(Drop, RequestDrop, RequestDrop);
@@ -199,7 +193,6 @@ pub enum Response<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> {
     Read(ResponseRead<C>),
     Write(ResponseWrite),
     Seek(ResponseSeek),
-    Tell(ResponseTell),
     Copy(ResponseCopy),
     Link(ResponseLink),
     Drop(ResponseDrop),
@@ -220,7 +213,6 @@ impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> From<Response<N, C, E>
             Response::Read(read) => Self::ResponseRead(read),
             Response::Write(write) => Self::ResponseWrite(write),
             Response::Seek(seek) => Self::ResponseSeek(seek),
-            Response::Tell(tell) => Self::ResponseTell(tell),
             Response::Copy(copy) => Self::ResponseCopy(copy),
             Response::Link(link) => Self::ResponseLink(link),
             Response::Drop(drop) => Self::ResponseDrop(drop),
@@ -246,7 +238,6 @@ impl<N: AsRef<str>, C: AsRef<[u8]>, E: AsRef<[Entry<N>]>> TryFrom<Message<N, C, 
             Message::ResponseRead(read) => Self::Read(read),
             Message::ResponseWrite(write) => Self::Write(write),
             Message::ResponseSeek(seek) => Self::Seek(seek),
-            Message::ResponseTell(tell) => Self::Tell(tell),
             Message::ResponseCopy(copy) => Self::Copy(copy),
             Message::ResponseLink(link) => Self::Link(link),
             Message::ResponseDrop(drop) => Self::Drop(drop),
@@ -287,7 +278,6 @@ response!(Remove, ResponseRemove, ResponseRemove);
 response!(Read, ResponseRead, ResponseRead<C>);
 response!(Write, ResponseWrite, ResponseWrite);
 response!(Seek, ResponseSeek, ResponseSeek);
-response!(Tell, ResponseTell, ResponseTell);
 response!(Copy, ResponseCopy, ResponseCopy);
 response!(Link, ResponseLink, ResponseLink);
 response!(Drop, ResponseDrop, ResponseDrop);
